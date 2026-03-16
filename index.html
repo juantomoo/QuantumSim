@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="QuantumSim V0.3, explorador atómico interactivo con tabla periódica y visualización 3D." />
+  <title>QuantumSim V0.3</title>
+</head>
+<body class="bg-[#0a0e17]">
+  <div id="root"></div>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+const IconBase = ({ className = '', children, ...props }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+    {...props}
+  >
+    {children}
+  </svg>
+);
+
+const Search = (props) => (
+  <IconBase {...props}>
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </IconBase>
+);
+
+const Globe = (props) => (
+  <IconBase {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M2 12h20" />
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z" />
+  </IconBase>
+);
+
+const BookOpen = (props) => (
+  <IconBase {...props}>
+    <path d="M2 4.5A2.5 2.5 0 0 1 4.5 2H10a3 3 0 0 1 3 3v14a2 2 0 0 0-2-2H4.5A2.5 2.5 0 0 0 2 19.5z" />
+    <path d="M22 4.5A2.5 2.5 0 0 0 19.5 2H14a3 3 0 0 0-3 3v14a2 2 0 0 1 2-2h6.5a2.5 2.5 0 0 1 2 2.5z" />
+  </IconBase>
+);
+
+const Layers = (props) => (
+  <IconBase {...props}>
+    <path d="m12 3 9 4.5-9 4.5-9-4.5 9-4.5Z" />
+    <path d="m3 12 9 4.5 9-4.5" />
+    <path d="m3 16.5 9 4.5 9-4.5" />
+  </IconBase>
+);
+
+const Info = (props) => (
+  <IconBase {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 16v-4" />
+    <path d="M12 8h.01" />
+  </IconBase>
+);
+
+const Settings2 = (props) => (
+  <IconBase {...props}>
+    <path d="M20 7h-9" />
+    <path d="M14 17H4" />
+    <circle cx="17" cy="7" r="3" />
+    <circle cx="7" cy="17" r="3" />
+  </IconBase>
+);
+
+const Eye = (props) => (
+  <IconBase {...props}>
+    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z" />
+    <circle cx="12" cy="12" r="3" />
+  </IconBase>
+);
+
+const EyeOff = (props) => (
+  <IconBase {...props}>
+    <path d="m3 3 18 18" />
+    <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2" />
+    <path d="M9.9 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2" />
+    <path d="M6.7 6.7C4.1 8.3 2 12 2 12a17.8 17.8 0 0 0 7.5 5.8" />
+  </IconBase>
+);
+
+const ArrowLeft = (props) => (
+  <IconBase {...props}>
+    <path d="M19 12H5" />
+    <path d="m12 19-7-7 7-7" />
+  </IconBase>
+);
+
+const ZoomIn = (props) => (
+  <IconBase {...props}>
+    <circle cx="11" cy="11" r="8" />
+    <path d="M11 8v6" />
+    <path d="M8 11h6" />
+    <path d="m21 21-4.3-4.3" />
+  </IconBase>
+);
+
+// --- DICTIONARY ---
+const DICT = {
+  es: {
+    title: "QuantumSim",
+    subtitle: "Explorador Atómico Interactivo",
+    atomicNumberLabel: "Número Atómico",
+    atomicMassLabel: "Masa Atómica",
+    modelsTitle: "Modelos Atómicos y Orbitales",
+    legend: "Leyenda",
+    descriptionTitle: "Descripción",
+    groupPeriod: "Grupo / Período",
+    fundamentals: "Fundamentos",
+    periodicTable: "Tabla Periódica",
+    search: "Buscar elemento...",
+    studyMode: "Modo Estudio",
+    filters: "Filtros",
+    all: "Todos",
+    state: "Estado",
+    block: "Bloque",
+    category: "Categoría",
+    solid: "Sólido",
+    liquid: "Líquido",
+    gas: "Gas",
+    unknown: "Desconocido",
+    mass: "Masa Atómica",
+    config: "Configuración",
+    electronegativity: "Electronegatividad",
+    bohrModel: "Modelo Bohr",
+    quantumModel: "Modelo Cuántico",
+    atomicRadius: "Radio Atómico",
+    year: "Año de Descubrimiento",
+    developedBy: "Desarrollado por JuanTomoo",
+    license: "Licencia MIT",
+    bohrDesc: "El modelo de Bohr muestra los electrones orbitando el núcleo en niveles de energía fijos y circulares.",
+    quantumDesc: "El modelo cuántico representa los electrones como nubes de probabilidad (orbitales s, p, d, f) alrededor del núcleo.",
+    eduTitle: "Fundamentos de la Química Cuántica",
+    eduZ: "Número Atómico (Z): Representa el número de protones en el núcleo de un átomo. Define la identidad del elemento.",
+    eduA: "Masa Atómica (A): Es la masa promedio de los átomos de un elemento, calculada usando la abundancia relativa de sus isótopos.",
+    eduOrb: "Orbitales Atómicos: Regiones del espacio alrededor del núcleo donde hay una alta probabilidad de encontrar un electrón (s, p, d, f).",
+    noData: "Sin datos",
+    legendNucleus: "Núcleo (Protones/Neutrones)",
+    legendElectrons: "Electrones (Partículas discretas)",
+    legendOrbits: "Niveles de Energía (Órbitas)",
+    legendClouds: "Nube de Probabilidad (Orbital)",
+    zoomTip: "Arrastra para rotar • Scroll para zoom",
+    backToTable: "Volver a la Tabla",
+    categories: {
+      0: "Metales Alcalinos", 1: "Alcalinotérreos", 2: "Metales de Transición", 3: "Metales del Bloque p", 
+      4: "Metaloides", 5: "No Metales", 6: "Halógenos", 7: "Gases Nobles", 8: "Lantánidos", 9: "Actínidos", 10: "Desconocido"
+    }
+  },
+  en: {
+    title: "QuantumSim",
+    subtitle: "Interactive Atomic Explorer",
+    atomicNumberLabel: "Atomic Number",
+    atomicMassLabel: "Atomic Mass",
+    modelsTitle: "Atomic Models and Orbitals",
+    legend: "Legend",
+    descriptionTitle: "Description",
+    groupPeriod: "Group / Period",
+    fundamentals: "Fundamentals",
+    periodicTable: "Periodic Table",
+    search: "Search element...",
+    studyMode: "Study Mode",
+    filters: "Filters",
+    all: "All",
+    state: "State",
+    block: "Block",
+    category: "Category",
+    solid: "Solid",
+    liquid: "Liquid",
+    gas: "Gas",
+    unknown: "Unknown",
+    mass: "Atomic Mass",
+    config: "Configuration",
+    electronegativity: "Electronegativity",
+    bohrModel: "Bohr Model",
+    quantumModel: "Quantum Model",
+    atomicRadius: "Atomic Radius",
+    year: "Discovery Year",
+    developedBy: "Developed by JuanTomoo",
+    license: "MIT License",
+    bohrDesc: "The Bohr model depicts electrons orbiting the nucleus in fixed, circular energy levels.",
+    quantumDesc: "The quantum model represents electrons as probability clouds (s, p, d, f orbitals) around the nucleus.",
+    eduTitle: "Fundamentals of Quantum Chemistry",
+    eduZ: "Atomic Number (Z): Represents the number of protons in an atom's nucleus. It defines the element's identity.",
+    eduA: "Atomic Mass (A): The average mass of atoms of an element, calculated using the relative abundance of isotopes.",
+    eduOrb: "Atomic Orbitals: Regions of space around the nucleus where there is a high probability of finding an electron (s, p, d, f).",
+    noData: "No data",
+    legendNucleus: "Nucleus (Protons/Neutrons)",
+    legendElectrons: "Electrons (Discrete particles)",
+    legendOrbits: "Energy Levels (Orbits)",
+    legendClouds: "Probability Cloud (Orbital)",
+    zoomTip: "Drag to rotate • Scroll to zoom",
+    backToTable: "Back to Table",
+    categories: {
+      0: "Alkali Metals", 1: "Alkaline Earth Metals", 2: "Transition Metals", 3: "Post-transition Metals", 
+      4: "Metalloids", 5: "Nonmetals", 6: "Halogens", 7: "Noble Gases", 8: "Lanthanides", 9: "Actinides", 10: "Unknown"
+    }
+  }
+};
+
+// --- COLOR PALETTE ---
+const CAT_COLORS = {
+  0: "#ef4444", 1: "#f97316", 2: "#eab308", 3: "#84cc16", 4: "#22c55e",
+  5: "#10b981", 6: "#06b6d4", 7: "#8b5cf6", 8: "#ec4899", 9: "#f43f5e", 10: "#6b7280"
+};
+
+// --- 118 ELEMENTS DATABASE (EXTENDED DESCRIPTIONS) ---
+const RAW_DATA = [
+  [1,"H","Hidrógeno","Hydrogen",1.008,5,"s",2,"1s1",2.2,1,1,"Es el elemento más ligero y abundante del universo, constituyendo aproximadamente el 75% de la materia bariónica. Es vital en la formación de estrellas y componente fundamental del agua y las moléculas orgánicas.","The lightest and most abundant element in the universe, making up about 75% of baryonic matter. Vital for star formation and a core component of water and organic molecules."],
+  [2,"He","Helio","Helium",4.0026,7,"s",2,"1s2",null,18,1,"Segundo elemento más ligero e inerte. Sintetizado en las estrellas mediante fusión nuclear. Su bajo punto de ebullición lo hace crucial en aplicaciones de criogenia e imanes superconductores.","Second lightest and inert element. Synthesized in stars via nuclear fusion. Its low boiling point makes it crucial for cryogenics and superconducting magnets."],
+  [3,"Li","Litio","Lithium",6.94,0,"s",0,"[He] 2s1",0.98,1,2,"El metal más ligero y sólido menos denso. Es altamente reactivo e inflamable. Fundamental en la tecnología moderna para la fabricación de baterías recargables de iones de litio.","The lightest metal and least dense solid. Highly reactive and flammable. Fundamental in modern technology for manufacturing rechargeable lithium-ion batteries."],
+  [4,"Be","Berilio","Beryllium",9.0122,1,"s",0,"[He] 2s2",1.57,2,2,"Un metal gris acero, fuerte, liviano y quebradizo. Su alta rigidez térmica y transparencia a los rayos X lo hacen invaluable en aplicaciones aeroespaciales y médicas.","A steel-gray, strong, lightweight, and brittle metal. Its high thermal stiffness and X-ray transparency make it invaluable in aerospace and medical applications."],
+  [5,"B","Boro","Boron",10.81,4,"p",0,"[He] 2s2 2p1",2.04,13,2,"Metaloide escaso en el universo pero vital para la estructura celular de las plantas. Exhibe propiedades semiconductoras y se usa en vidrios de borosilicato (Pyrex).","Rare metalloid in the universe but vital for plant cell walls. Exhibits semiconducting properties and is used in borosilicate glass (Pyrex)."],
+  [6,"C","Carbono","Carbon",12.011,5,"p",0,"[He] 2s2 2p2",2.55,14,2,"El pilar de la química orgánica y la base química de toda la vida conocida. Tiene formas alotrópicas drásticamente distintas, desde el blando grafito hasta el extremadamente duro diamante.","The pillar of organic chemistry and chemical basis of all known life. It has drastically different allotropes, from soft graphite to extremely hard diamond."],
+  [7,"N","Nitrógeno","Nitrogen",14.007,5,"p",2,"[He] 2s2 2p3",3.04,15,2,"Gas inerte que compone el 78% de la atmósfera terrestre. Es un nutriente esencial para la vida, presente en aminoácidos, proteínas y en la molécula de ADN.","Inert gas comprising 78% of Earth's atmosphere. An essential nutrient for life, present in amino acids, proteins, and the DNA molecule."],
+  [8,"O","Oxígeno","Oxygen",15.999,5,"p",2,"[He] 2s2 2p4",3.44,16,2,"Elemento altamente reactivo, vital para la respiración celular en la mayoría de los organismos terrestres. Forma la capa de ozono y es clave en los procesos de combustión.","Highly reactive element, vital for cellular respiration in most terrestrial organisms. Forms the ozone layer and is key in combustion processes."],
+  [9,"F","Flúor","Fluorine",18.998,6,"p",2,"[He] 2s2 2p5",3.98,17,2,"El halógeno más ligero y el elemento químico más electronegativo y reactivo de la tabla. Sus compuestos se usan ampliamente en la prevención de caries y refrigerantes.","The lightest halogen and the most electronegative and reactive chemical element. Its compounds are widely used in tooth decay prevention and refrigerants."],
+  [10,"Ne","Neón","Neon",20.180,7,"p",2,"[He] 2s2 2p6",null,18,2,"Gas noble inerte conocido mundialmente por emitir un distintivo y brillante resplandor rojo anaranjado cuando se utiliza en lámparas de descarga de alto voltaje.","Inert noble gas globally known for emitting a distinctive, bright reddish-orange glow when used in high-voltage discharge lamps."],
+  [11,"Na","Sodio","Sodium",22.990,0,"s",0,"[Ne] 3s1",0.93,1,3,"Metal alcalino blando y reactivo que arde violentamente al contacto con el agua. En forma de cloruro de sodio (sal), es un mineral esencial para las funciones nerviosas.","Soft, reactive alkali metal that burns violently upon contact with water. In the form of sodium chloride (salt), it is an essential mineral for nerve functions."],
+  [12,"Mg","Magnesio","Magnesium",24.305,1,"s",0,"[Ne] 3s2",1.31,2,3,"Metal ligero de color blanco plateado que arde con una luz blanca deslumbrante. Es el ion central en la molécula de clorofila, esencial para la fotosíntesis.","Light, silvery-white metal that burns with a dazzling white light. It is the central ion in the chlorophyll molecule, essential for photosynthesis."],
+  [13,"Al","Aluminio","Aluminum",26.982,3,"p",0,"[Ne] 3s2 3p1",1.61,13,3,"El metal más abundante en la corteza terrestre. Es notable por su baja densidad y excelente resistencia a la corrosión mediante el fenómeno de pasivación.","The most abundant metal in the Earth's crust. Notable for its low density and excellent corrosion resistance through the phenomenon of passivation."],
+  [14,"Si","Silicio","Silicon",28.085,4,"p",0,"[Ne] 3s2 3p2",1.90,14,3,"Metaloide cristalino fundamental como material semiconductor. Es el corazón de los transistores, microchips y de casi toda la tecnología electrónica moderna.","Crystalline metalloid fundamental as a semiconductor material. It is the heart of transistors, microchips, and almost all modern electronic technology."],
+  [15,"P","Fósforo","Phosphorus",30.974,5,"p",0,"[Ne] 3s2 3p3",2.19,15,3,"Elemento altamente reactivo presente en el ADN y el ATP (moneda energética celular). Su forma alotrópica blanca es tóxica y brilla en la oscuridad por quimioluminiscencia.","Highly reactive element present in DNA and ATP (cellular energy currency). Its white allotrope is toxic and glows in the dark due to chemiluminescence."],
+  [16,"S","Azufre","Sulfur",32.06,5,"p",0,"[Ne] 3s2 3p4",2.58,16,3,"No metal amarillo abundante y multiespectral. Históricamente conocido como azufre, se utiliza masivamente en la producción de ácido sulfúrico, fertilizantes y vulcanización del caucho.","Abundant, multivalent yellow nonmetal. Historically known as brimstone, it is massively used in producing sulfuric acid, fertilizers, and rubber vulcanization."],
+  [17,"Cl","Cloro","Chlorine",35.45,6,"p",2,"[Ne] 3s2 3p5",3.16,17,3,"Gas tóxico de color amarillo verdoso y olor sofocante en su forma pura. Es un agente oxidante extremadamente potente utilizado mundialmente para desinfección del agua.","Toxic yellow-green gas with a choking smell in its pure form. It is an extremely powerful oxidizing agent used globally for water disinfection."],
+  [18,"Ar","Argón","Argon",39.95,7,"p",2,"[Ne] 3s2 3p6",null,18,3,"Gas noble incoloro e inodoro, siendo el tercer gas más abundante en nuestra atmósfera. Proporciona una atmósfera inerte en soldadura y en bombillas incandescentes.","Colorless and odorless noble gas, the third most abundant gas in our atmosphere. Provides an inert atmosphere in welding and incandescent light bulbs."],
+  [19,"K","Potasio","Potassium",39.098,0,"s",0,"[Ar] 4s1",0.82,1,4,"Metal blando que se oxida rápidamente al aire. Sus iones son vitales para la transmisión de impulsos nerviosos en el cuerpo humano y su isótopo K-40 es radiactivo.","Soft metal that rapidly oxidizes in air. Its ions are vital for nerve impulse transmission in the human body, and its K-40 isotope is naturally radioactive."],
+  [20,"Ca","Calcio","Calcium",40.078,1,"s",0,"[Ar] 4s2",1.00,2,4,"Metal gris plateado muy reactivo. Forma la base estructural de huesos, conchas y dientes en biología, y es indispensable en la producción de cemento.","Highly reactive silvery-gray metal. Forms the structural basis of bones, shells, and teeth in biology, and is indispensable in cement production."],
+  [21,"Sc","Escandio","Scandium",44.956,2,"d",0,"[Ar] 3d1 4s2",1.36,3,4,"Metal de transición escaso y costoso de extraer. Se usa en aleaciones de aluminio-escandio para componentes aeroespaciales ligeros y equipamiento deportivo premium.","Rare transition metal, expensive to extract. Used in aluminum-scandium alloys for lightweight aerospace components and premium sports equipment."],
+  [22,"Ti","Titanio","Titanium",47.867,2,"d",0,"[Ar] 3d2 4s2",1.54,4,4,"Famoso por tener la mayor proporción de resistencia-densidad de cualquier metal. Es altamente resistente a la corrosión química y biocompatible con el tejido óseo humano.","Famous for having the highest strength-to-density ratio of any metallic element. Highly chemically corrosion-resistant and biocompatible with human bone tissue."],
+  [23,"V","Vanadio","Vanadium",50.942,2,"d",0,"[Ar] 3d3 4s2",1.63,5,4,"Metal dúctil y maleable de color grisáceo. Se utiliza casi exclusivamente como aditivo (ferrovanadio) para aumentar drásticamente la resistencia y dureza del acero.","Ductile and malleable grayish metal. Used almost exclusively as an additive (ferrovanadium) to drastically increase the strength and hardness of steel."],
+  [24,"Cr","Cromo","Chromium",51.996,2,"d",0,"[Ar] 3d5 4s1",1.66,6,4,"Un metal brillante que resiste el deslustre. Es el aditivo esencial para fabricar acero inoxidable, previniendo su oxidación, y se emplea en el cromado de vehículos.","A lustrous metal that resists tarnishing. The essential additive to make stainless steel, preventing rust, and is widely used in vehicle chrome plating."],
+  [25,"Mn","Manganeso","Manganese",54.938,2,"d",0,"[Ar] 3d5 4s2",1.55,7,4,"Metal duro, quebradizo y de aspecto plateado. Desempeña un papel estructural indispensable en la metalurgia del hierro para desoxidar y mejorar la durabilidad del acero.","Hard, brittle, silvery-looking metal. Plays an indispensable structural role in iron metallurgy to deoxidize and improve the durability of steel."],
+  [26,"Fe","Hierro","Iron",55.845,2,"d",0,"[Ar] 3d6 4s2",1.83,8,4,"El metal más abundante de la Tierra por masa y componente central del núcleo terrestre. Es el pilar de la infraestructura civil y biológicamente vital en la hemoglobina.","The most abundant metal on Earth by mass and central component of Earth's core. The pillar of civil infrastructure and biologically vital in hemoglobin."],
+  [27,"Co","Cobalto","Cobalt",58.933,2,"d",0,"[Ar] 3d7 4s2",1.88,9,4,"Metal magnético utilizado tradicionalmente para dar un color azul profundo al vidrio. Hoy es un material geoestratégico clave para baterías de iones de litio y superaleaciones.","Magnetic metal traditionally used to impart a deep blue color to glass. Today, a key geostrategic material for lithium-ion batteries and superalloys."],
+  [28,"Ni","Níquel","Nickel",58.693,2,"d",0,"[Ar] 3d8 4s2",1.91,10,4,"Metal de transición versátil, magnético a temperatura ambiente. Valorado por su excelente resistencia a la corrosión, utilizado en monedas, blindajes y acero inoxidable.","Versatile transition metal, magnetic at room temperature. Valued for excellent corrosion resistance, used in coins, armor plating, and stainless steel."],
+  [29,"Cu","Cobre","Copper",63.546,2,"d",0,"[Ar] 3d10 4s1",1.90,11,4,"Metal rojizo blando con una conductividad térmica y eléctrica excepcionalmente alta. Ha sido fundamental para el desarrollo humano, desde la Edad de Bronce hasta la electrónica actual.","Soft reddish metal with exceptionally high thermal and electrical conductivity. Fundamental to human development from the Bronze Age to modern electronics."],
+  [30,"Zn","Zinc","Zinc",65.38,2,"d",0,"[Ar] 3d10 4s2",1.65,12,4,"Metal azulado-pálido que se utiliza masivamente en procesos de galvanización para proteger el hierro y acero contra la oxidación. También forma la aleación de latón junto al cobre.","Pale-bluish metal massively used in galvanization processes to protect iron and steel from rusting. Also forms the brass alloy alongside copper."],
+  [31,"Ga","Galio","Gallium",69.723,3,"p",0,"[Ar] 3d10 4s2 4p1",1.81,13,4,"Posee un punto de fusión tan bajo (29.7°C) que puede derretirse al sostenerlo en la mano. Crucial en semiconductores (Arseniuro de Galio) para LEDs y microondas.","Has such a low melting point (29.7°C) that it melts when held in the hand. Crucial in semiconductors (Gallium Arsenide) for LEDs and microwaves."],
+  [32,"Ge","Germanio","Germanium",72.630,4,"p",0,"[Ar] 3d10 4s2 4p2",2.01,14,4,"Un metaloide blanco grisáceo brillante. Fue el semiconductor original antes del silicio, fundamental en los primeros transistores y vital hoy en la fibra óptica.","A lustrous grayish-white metalloid. It was the original semiconductor before silicon, fundamental in early transistors and vital today in fiber optics."],
+  [33,"As","Arsénico","Arsenic",74.922,4,"p",0,"[Ar] 3d10 4s2 4p3",2.18,15,4,"Metaloide gris, notorio históricamente por la extrema toxicidad de sus compuestos. Hoy en día se emplea en dopaje de semiconductores y preservación de madera.","Gray metalloid, historically notorious for the extreme toxicity of its compounds. Today, used in semiconductor doping and wood preservation."],
+  [34,"Se","Selenio","Selenium",78.971,5,"p",0,"[Ar] 3d10 4s2 4p4",2.55,16,4,"No metal cuyas propiedades eléctricas responden drásticamente a la luz (fotoconductividad). Utilizado en fotocopiadoras, células fotoeléctricas y como suplemento dietético traza.","Nonmetal whose electrical properties respond drastically to light (photoconductivity). Used in photocopiers, photoelectric cells, and as a trace dietary supplement."],
+  [35,"Br","Bromo","Bromine",79.904,6,"p",1,"[Ar] 3d10 4s2 4p5",2.96,17,4,"El único elemento no metálico que es líquido a temperatura ambiente. Es un fluido tóxico, de color rojo parduzco, utilizado en retardantes de llama y purificación química.","The only nonmetallic element that is liquid at room temperature. A toxic, brownish-red fluid used in flame retardants and chemical purification."],
+  [36,"Kr","Criptón","Krypton",83.798,7,"p",2,"[Ar] 3d10 4s2 4p6",3.00,18,4,"Gas noble raro en la Tierra. Emite una luz blanca y brillante cuando se ioniza eléctricamente, lo que lo hace ideal para láseres de alta potencia y fotografía de alta velocidad.","Rare noble gas on Earth. Emits a bright white light when electrically ionized, making it ideal for high-power lasers and high-speed photography."],
+  [37,"Rb","Rubidio","Rubidium",85.468,0,"s",0,"[Kr] 5s1",0.82,1,5,"Un metal alcalino increíblemente blando y reactivo que arde espontáneamente al contacto con el aire. Se usa en relojes atómicos y fotocélulas de alta precisión.","An incredibly soft and reactive alkali metal that burns spontaneously upon contact with air. Used in atomic clocks and high-precision photocells."],
+  [38,"Sr","Estroncio","Strontium",87.62,1,"s",0,"[Kr] 5s2",0.95,2,5,"Metal blando altamente reactivo que imparte un color rojo carmesí brillante a las llamas. Es el ingrediente secreto detrás del color rojo vibrante en los fuegos artificiales.","Highly reactive soft metal that imparts a brilliant crimson red color to flames. It is the secret ingredient behind vibrant red colors in fireworks."],
+  [39,"Y","Itrio","Yttrium",88.906,2,"d",0,"[Kr] 4d1 5s2",1.22,3,5,"Metal de transición casi siempre asociado con elementos de tierras raras. Crítico para la creación de fósforos rojos que daban color a las antiguas televisiones de tubo (CRT).","Transition metal almost always associated with rare-earth elements. Critical for creating the red phosphors that colored old CRT televisions."],
+  [40,"Zr","Circonio","Zirconium",91.224,2,"d",0,"[Kr] 4d2 5s2",1.33,4,5,"Metal lustroso muy resistente al calor y a la corrosión. El óxido de circonio simulado (circonita) se usa ampliamente como una alternativa económica y brillante a los diamantes.","Lustrous metal highly resistant to heat and corrosion. Simulated zirconium oxide (cubic zirconia) is widely used as an affordable, brilliant diamond alternative."],
+  [41,"Nb","Niobio","Niobium",92.906,2,"d",0,"[Kr] 4d4 5s1",1.6,5,5,"Metal superconductor y dúctil. Se alea con el acero para mejorar enormemente su fuerza a bajas temperaturas, utilizado en cohetes y maquinaria pesada.","Superconducting and ductile metal. Alloyed with steel to greatly improve its strength at low temperatures, used in rockets and heavy machinery."],
+  [42,"Mo","Molibdeno","Molybdenum",95.95,2,"d",0,"[Kr] 4d5 5s1",2.16,6,5,"Posee uno de los puntos de fusión más altos de todos los elementos. Es una adición vital en el blindaje militar y herramientas de corte por su extrema resistencia térmica.","Possesses one of the highest melting points of all elements. A vital addition in military armor and cutting tools due to its extreme thermal resistance."],
+  [43,"Tc","Tecnecio","Technetium",98,2,"d",0,"[Kr] 4d5 5s2",1.9,7,5,"Fue el primer elemento producido artificialmente en la historia. Al ser radiactivo y emitir rayos gamma detectables, es el isótopo médico más usado en diagnósticos por imagen.","The first artificially produced element in history. Being radioactive and emitting detectable gamma rays, it is the most used medical isotope in diagnostic imaging."],
+  [44,"Ru","Rutenio","Ruthenium",101.07,2,"d",0,"[Kr] 4d7 5s1",2.2,8,5,"Un metal de transición raro de la familia del platino. Es extremadamente duro y se usa habitualmente para endurecer aleaciones eléctricas y hacer contactos resistentes al desgaste.","A rare transition metal of the platinum group. Extremely hard, it is regularly used to harden electrical alloys and create wear-resistant contacts."],
+  [45,"Rh","Rodio","Rhodium",102.91,2,"d",0,"[Kr] 4d8 5s1",2.28,9,5,"Uno de los metales preciosos más raros y costosos del mundo. Su asombrosa capacidad catalítica lo hace insustituible en los convertidores catalíticos de automóviles.","One of the rarest and most expensive precious metals globally. Its astounding catalytic ability makes it irreplaceable in automobile catalytic converters."],
+  [46,"Pd","Paladio","Palladium",106.42,2,"d",0,"[Kr] 4d10",2.20,10,5,"Metal brillante que tiene la notable capacidad de absorber hasta 900 veces su propio volumen en gas hidrógeno. Fundamental en tecnología de purificación de hidrógeno.","Lustrous metal with the remarkable ability to absorb up to 900 times its own volume in hydrogen gas. Fundamental in hydrogen purification technology."],
+  [47,"Ag","Plata","Silver",107.87,2,"d",0,"[Kr] 4d10 5s1",1.93,11,5,"El metal con la conductividad eléctrica, térmica y óptica más alta del universo conocido. Históricamente valiosa, hoy es pilar de la industria electrónica y fotovoltaica.","The metal with the highest electrical, thermal, and optical conductivity in the known universe. Historically valuable, today a pillar of electronics and solar industries."],
+  [48,"Cd","Cadmio","Cadmium",112.41,2,"d",0,"[Kr] 4d10 5s2",1.69,12,5,"Un metal blando y tóxico. Antes se usaba masivamente en pigmentos brillantes y baterías recargables Ni-Cd, uso que ha disminuido debido a sus severos riesgos ambientales.","A soft, toxic metal. Formerly used massively in bright pigments and Ni-Cd rechargeable batteries, usage has declined due to severe environmental risks."],
+  [49,"In","Indio","Indium",114.82,3,"p",0,"[Kr] 4d10 5s2 5p1",1.78,13,5,"Un metal brillante tan blando que puedes cortarlo con un cuchillo o masticarlo. El óxido de indio y estaño (ITO) es la base transparente de todas las pantallas táctiles modernas.","A shiny metal so soft you can cut it with a knife or chew it. Indium tin oxide (ITO) is the transparent basis of all modern touchscreens."],
+  [50,"Sn","Estaño","Tin",118.71,3,"p",0,"[Kr] 4d10 5s2 5p2",1.96,14,5,"Metal maleable que no se oxida fácilmente. Al alearse con el cobre formó el bronce, cambiando la historia humana. Hoy se usa para soldar componentes electrónicos.","Malleable metal that resists oxidation. Alloying with copper created bronze, changing human history. Today used extensively as electrical solder."],
+  [51,"Sb","Antimonio","Antimony",121.76,4,"p",0,"[Kr] 4d10 5s2 5p3",2.05,15,5,"Un metaloide gris y quebradizo que paradójicamente se expande al congelarse. Es un compuesto clave en la fabricación de plásticos PET, microelectrónica y retardantes de fuego.","A brittle, gray metalloid that paradoxically expands upon freezing. A key compound in manufacturing PET plastics, microelectronics, and flame retardants."],
+  [52,"Te","Telurio","Tellurium",127.60,4,"p",0,"[Kr] 4d10 5s2 5p4",2.1,16,5,"Un metaloide quebradizo extremadamente raro en la Tierra. Su aleación con cadmio crea paneles solares de película fina que absorben la luz solar con altísima eficiencia.","A brittle metalloid extremely rare on Earth. Its alloy with cadmium creates thin-film solar panels that absorb sunlight with very high efficiency."],
+  [53,"I","Yodo","Iodine",126.90,6,"p",0,"[Kr] 4d10 5s2 5p5",2.66,17,5,"Sólido oscuro que sublima en un hermoso gas púrpura. Es el elemento esencial más pesado en biología, crucial para que la glándula tiroides regule el metabolismo humano.","Dark solid that sublimes into a beautiful purple gas. The heaviest essential element in biology, crucial for the thyroid gland to regulate human metabolism."],
+  [54,"Xe","Xenón","Xenon",131.29,7,"p",2,"[Kr] 4d10 5s2 5p6",2.6,18,5,"Gas noble inodoro y denso. Genera un intenso destello de luz al ser excitado eléctricamente, impulsando lámparas de flash estroboscópico, faros de automóviles y propulsores iónicos.","Dense, odorless noble gas. Generates an intense flash of light when electrically excited, driving strobe flashes, car headlights, and deep-space ion thrusters."],
+  [55,"Cs","Cesio","Caesium",132.91,0,"s",0,"[Xe] 6s1",0.79,1,6,"Metal dorado increíblemente reactivo que explota violentamente en agua. Su isótopo natural dicta el estándar universal del tiempo en los relojes atómicos mundiales.","Incredibly reactive golden metal that explodes violently in water. Its natural isotope dictates the universal standard of time in global atomic clocks."],
+  [56,"Ba","Bario","Barium",137.33,1,"s",0,"[Xe] 6s2",0.89,2,6,"Metal denso y altamente reactivo. El sulfato de bario, al ser opaco a los rayos X, se ingiere temporalmente como líquido de contraste para examinar el tracto digestivo humano.","Dense, highly reactive metal. Barium sulfate, being opaque to X-rays, is swallowed temporarily as a contrast liquid to examine the human digestive tract."],
+  [57,"La","Lantano","Lanthanum",138.91,8,"f",0,"[Xe] 5d1 6s2",1.1,3,6,"Metal blanco plateado tan blando que puede cortarse con un cuchillo. Da nombre a la serie de los lantánidos y mejora drásticamente el índice de refracción en lentes de cámaras profesionales.","Silvery-white metal soft enough to be cut with a knife. Names the lanthanide series and drastically improves the refractive index in professional camera lenses."],
+  [58,"Ce","Cerio","Cerium",140.12,8,"f",0,"[Xe] 4f1 5d1 6s2",1.12,0,8,"Es el metal de tierras raras más abundante en la corteza terrestre. Emite chispas al ser golpeado, siendo el componente principal en las piedras de los encendedores modernos.","The most abundant rare-earth metal in Earth's crust. Emits sparks when struck, making it the primary component in modern lighter flints."],
+  [59,"Pr","Praseodimio","Praseodymium",140.91,8,"f",0,"[Xe] 4f3 6s2",1.13,0,8,"Un lantánido blando que reacciona lentamente con el oxígeno. Utilizado para crear imanes de alta potencia y filtros de vidrio especializados para máscaras de soldadura (bloqueando luz IR).","A soft lanthanide that slowly reacts with oxygen. Used to create high-power magnets and specialized glass filters for welder's goggles (blocking IR light)."],
+  [60,"Nd","Neodimio","Neodymium",144.24,8,"f",0,"[Xe] 4f4 6s2",1.14,0,8,"Famoso mundialmente por ser la base de los imanes permanentes más fuertes conocidos. Estos imanes impulsan motores de vehículos eléctricos, discos duros y turbinas eólicas.","Globally famous for forming the base of the strongest known permanent magnets. These magnets drive EV motors, computer hard drives, and wind turbines."],
+  [61,"Pm","Prometio","Promethium",145,8,"f",0,"[Xe] 4f5 6s2",1.13,0,8,"Es el único lantánido radiactivo sin isótopos estables. Rara vez se encuentra en la naturaleza; se usa en recubrimientos luminosos y como fuente de energía en baterías de larga duración.","The only radioactive lanthanide with no stable isotopes. Rarely found in nature; used in luminous paints and as a power source in long-lasting atomic batteries."],
+  [62,"Sm","Samario","Samarium",150.36,8,"f",0,"[Xe] 4f6 6s2",1.17,0,8,"Metal plateado de tierras raras. Las aleaciones de samario-cobalto generan imanes excepcionalmente permanentes que pueden operar a altísimas temperaturas sin perder su magnetismo.","Silvery rare-earth metal. Samarium-cobalt alloys create exceptionally permanent magnets that can operate at extreme temperatures without losing magnetism."],
+  [63,"Eu","Europio","Europium",151.96,8,"f",0,"[Xe] 4f7 6s2",1.2,0,8,"El más reactivo de los metales de tierras raras. Bajo luz ultravioleta brilla en rojo o azul intenso, siendo crítico para los billetes europeos antifalsificación y pantallas LED.","The most reactive of the rare-earth metals. Under UV light, it glows intense red or blue, critical for anti-counterfeiting in Euro banknotes and LED screens."],
+  [64,"Gd","Gadolinio","Gadolinium",157.25,8,"f",0,"[Xe] 4f7 5d1 6s2",1.2,0,8,"Posee propiedades magnéticas inusuales que cambian abruptamente con la temperatura (efecto magnetocalórico). Es el principal agente de contraste en imágenes de resonancia magnética (MRI).","Possesses unusual magnetic properties that change abruptly with temperature. It is the primary contrast agent used in Magnetic Resonance Imaging (MRI)."],
+  [65,"Tb","Terbio","Terbium",158.93,8,"f",0,"[Xe] 4f9 6s2",1.2,0,8,"Lantánido maleable utilizado como componente vital en fósforos verdes. En combinación con el europio, produce la nítida retroiluminación brillante en pantallas de televisores y móviles.","Malleable lanthanide used as a vital component in green phosphors. Combined with europium, it produces sharp, bright backlighting in TVs and smartphones."],
+  [66,"Dy","Disprosio","Dysprosium",162.50,8,"f",0,"[Xe] 4f10 6s2",1.22,0,8,"Un elemento con una susceptibilidad magnética extremadamente alta. Se usa en varillas de control nuclear por su alta capacidad para absorber neutrones térmicos y en láseres.","An element with extremely high magnetic susceptibility. Used in nuclear control rods due to its high thermal neutron absorption cross-section, and in lasers."],
+  [67,"Ho","Holmio","Holmium",164.93,8,"f",0,"[Xe] 4f11 6s2",1.23,0,8,"Posee la mayor fuerza magnética (momento magnético) de cualquier elemento en la tabla. Se usa para crear los campos magnéticos artificiales más fuertes y en equipos médicos láser.","Possesses the highest magnetic strength (magnetic moment) of any element on the table. Used to create the strongest artificial magnetic fields and in medical lasers."],
+  [68,"Er","Erbio","Erbium",167.26,8,"f",0,"[Xe] 4f12 6s2",1.24,0,8,"Metal de tierras raras cuyos iones tienen un color rosa fluorescente brillante. Cuando se introduce en cables de fibra óptica, amplifica las señales láser para la comunicación global de internet.","Rare-earth metal whose ions possess a bright fluorescent pink color. Doped into fiber-optic cables, it amplifies laser signals driving global internet communication."],
+  [69,"Tm","Tulio","Thulium",168.93,8,"f",0,"[Xe] 4f13 6s2",1.25,0,8,"El segundo lantánido más raro. A pesar de su escasez y coste, el tulio radiactivo se emplea como fuente de radiación compacta en dispositivos médicos portátiles de rayos X.","The second rarest lanthanide. Despite its scarcity and cost, radioactive thulium is employed as a compact radiation source in portable medical X-ray devices."],
+  [70,"Yb","Iterbio","Ytterbium",173.05,8,"f",0,"[Xe] 4f14 6s2",1.1,0,8,"Un lantánido suave y plateado. Se utiliza cada vez más en memorias de computadoras cuánticas, láseres de fibra industrial para el corte de metales y en la construcción de relojes atómicos ultrapcisos.","A soft, silvery lanthanide. Increasingly used in quantum memory computing, industrial fiber lasers for metal cutting, and building ultra-precise atomic clocks."],
+  [71,"Lu","Lutecio","Lutetium",174.97,8,"d",0,"[Xe] 4f14 5d1 6s2",1.27,3,6,"Es el lantánido más denso, duro y costoso debido a su extrema rareza en minerales. Sus isótopos se emplean en medicina nuclear avanzada para detectar y tratar tumores específicos.","The densest, hardest, and most expensive lanthanide due to extreme rarity in ores. Its isotopes are used in advanced nuclear medicine to detect and treat specific tumors."],
+  [72,"Hf","Hafnio","Hafnium",178.49,2,"d",0,"[Xe] 4f14 5d2 6s2",1.3,4,6,"Metal plateado brillante, química y visualmente idéntico al circonio. Es un extraordinario absorbente de neutrones, lo que lo hace ideal para regular reactores nucleares de submarinos.","Shiny silvery metal, chemically and visually identical to zirconium. An extraordinary neutron absorber, making it ideal for regulating submarine nuclear reactors."],
+  [73,"Ta","Tántalo","Tantalum",180.95,2,"d",0,"[Xe] 4f14 5d3 6s2",1.5,5,6,"Metal denso e increíblemente resistente a la corrosión y fluidos corporales. Esto lo hace indispensable para implantes quirúrgicos humanos y microcapacitores de alta gama en electrónica.","Dense metal, incredibly resistant to corrosion and bodily fluids. This makes it indispensable for human surgical implants and high-end microcapacitors in electronics."],
+  [74,"W","Wolframio","Tungsten",183.84,2,"d",0,"[Xe] 4f14 5d4 6s2",2.36,6,6,"Conocido en inglés como Tungsteno, tiene el punto de fusión más alto de todos los elementos metálicos. Famoso como el filamento de las históricas bombillas incandescentes y tubos de rayos X.","Has the highest melting point of all metallic elements. Famous as the glowing filament in historical incandescent light bulbs and X-ray tubes."],
+  [75,"Re","Renio","Rhenium",186.21,2,"d",0,"[Xe] 4f14 5d5 6s2",1.9,7,6,"Uno de los elementos más densos y el último elemento estable en ser descubierto. Aleado a base de níquel, permite que las turbinas de aviones a reacción funcionen a temperaturas críticas.","One of the densest elements and the last stable element to be discovered. Nickel-based alloys with rhenium allow jet aircraft turbines to operate at critical temperatures."],
+  [76,"Os","Osmio","Osmium",190.23,2,"d",0,"[Xe] 4f14 5d6 6s2",2.2,8,6,"Es el elemento natural más denso que existe en el universo conocido. Su óxido es altamente tóxico, pero su dureza permite usar aleaciones de osmio en plumillas de bolígrafos finos.","The densest naturally occurring element in the known universe. Its oxide is highly toxic, but its hardness allows osmium alloys in fine fountain pen nibs."],
+  [77,"Ir","Iridio","Iridium",192.22,2,"d",0,"[Xe] 4f14 5d7 6s2",2.2,9,6,"El metal conocido más resistente a la corrosión. Una capa anómala de iridio en la Tierra respalda la teoría de que el impacto de un asteroide gigante provocó la extinción de los dinosaurios.","The most corrosion-resistant metal known. An anomalous global iridium layer supports the theory that a giant asteroid impact caused dinosaur extinction."],
+  [78,"Pt","Platino","Platinum",195.08,2,"d",0,"[Xe] 4f14 5d9 6s1",2.28,10,6,"Metal precioso altamente maleable y no reactivo. Extensamente utilizado en joyería fina, pero su uso principal es industrial como potente catalizador en vehículos y procesos químicos.","Highly malleable and unreactive precious metal. Extensively used in fine jewelry, but its primary use is industrial as a potent catalyst in vehicles and chemistry."],
+  [79,"Au","Oro","Gold",196.97,2,"d",0,"[Xe] 4f14 5d10 6s1",2.54,11,6,"Metal precioso por excelencia, denso, blando y altamente inerte. Incorruptible por el tiempo, ha sido la base económica humana. Excelente conductor, bañando conectores de cables premium.","Precious metal par excellence: dense, soft, highly inert. Incorruptible by time, it has been the human economic base. Excellent conductor, plating premium cable connectors."],
+  [80,"Hg","Mercurio","Mercury",200.59,2,"d",1,"[Xe] 4f14 5d10 6s2",2.0,12,6,"El único metal que es completamente líquido en condiciones ambientales. Apodado 'plata líquida', es altamente tóxico y su uso ha disminuido severamente, pero sigue siendo histórico en termómetros.","The only metal completely liquid under ambient conditions. Nicknamed 'quicksilver', it is highly toxic and its usage has severely declined, but remains historical in thermometers."],
+  [81,"Tl","Talio","Thallium",204.38,3,"p",0,"[Xe] 4f14 5d10 6s2 6p1",1.62,13,6,"Un metal pesado que parece plomo pero es extremadamente tóxico, perdiéndose el cabello tras el envenenamiento. Históricamente se utilizó ampliamente como potente veneno para roedores.","A heavy metal resembling lead but extremely toxic, causing hair loss upon poisoning. Historically, it was widely used as a potent rat poison."],
+  [82,"Pb","Plomo","Lead",207.2,3,"p",0,"[Xe] 4f14 5d10 6s2 6p2",2.33,14,6,"Metal pesado, denso, blando y maleable. A pesar de su bien documentada toxicidad sistémica, sigue siendo vital como blindaje contra la radiación en hospitales y en baterías de vehículos.","Heavy, dense, soft, malleable metal. Despite well-documented systemic toxicity, it remains vital as radiation shielding in hospitals and in car batteries."],
+  [83,"Bi","Bismuto","Bismuth",208.98,3,"p",0,"[Xe] 4f14 5d10 6s2 6p3",2.02,15,6,"Metal pesado diamagnético y de bajísima toxicidad, sirviendo como sustituto del plomo. Su cristalización forma hermosos e intrincados patrones geométricos con iridiscencia de arcoíris.","Diamagnetic heavy metal with extremely low toxicity, serving as a lead substitute. Its crystallization forms beautiful, intricate geometric patterns with rainbow iridescence."],
+  [84,"Po","Polonio","Polonium",209,4,"p",0,"[Xe] 4f14 5d10 6s2 6p4",2.0,16,6,"Metaloide raro y peligrosamente radiactivo descubierto por Marie Curie. Emite tal cantidad de radiación alfa que una pequeña cápsula se calienta físicamente de manera espontánea.","Rare, dangerously radioactive metalloid discovered by Marie Curie. Emits such intense alpha radiation that a small capsule physically heats up spontaneously."],
+  [85,"At","Astato","Astatine",210,4,"p",0,"[Xe] 4f14 5d10 6s2 6p5",2.2,17,6,"Considerado el elemento natural más raro que existe en toda la corteza terrestre (solo unos 25 gramos). Es un halógeno radiactivo cuya vida media máxima es de escasas horas.","Considered the rarest naturally occurring element in the entire Earth's crust (only about 25 grams). A radioactive halogen with a maximum half-life of mere hours."],
+  [86,"Rn","Radón","Radon",222,7,"p",2,"[Xe] 4f14 5d10 6s2 6p6",2.2,18,6,"Gas noble incoloro, denso e invisible, producto de la desintegración del uranio. Es radiactivo y su acumulación en sótanos es una grave amenaza de salud (cáncer de pulmón).","Colorless, dense, invisible noble gas, product of uranium decay. It is radioactive and its accumulation in basements poses a severe health threat (lung cancer)."],
+  [87,"Fr","Francio","Francium",223,0,"s",0,"[Rn] 7s1",0.7,1,7,"El metal alcalino más pesado y uno de los elementos más inestables y raros de la tabla periódica. Al ser extremadamente radiactivo, jamás se ha logrado reunir una cantidad visible al ojo humano.","The heaviest alkali metal and one of the most unstable, rare elements on the periodic table. Extremely radioactive, a visible quantity has never been amassed."],
+  [88,"Ra","Radio","Radium",226,1,"s",0,"[Rn] 7s2",0.9,2,7,"Elemento alcalinotérreo blanco y brillante descubierto por Marie Curie. Su altísima radiactividad lo hace brillar débilmente en azul. Antiguamente se usó para hacer esferas de reloj luminosas.","Brilliant white alkaline earth element discovered by Marie Curie. Its extreme radioactivity makes it faintly glow blue. Formerly used in luminous watch dials."],
+  [89,"Ac","Actinio","Actinium",227,9,"f",0,"[Rn] 6d1 7s2",1.1,3,7,"Metal radiactivo que da nombre a toda la serie de los actínidos. Es tan activo que su propia radiación ioniza el aire a su alrededor, produciendo un etéreo y fantasmagórico resplandor azul pálido.","Radioactive metal naming the entire actinide series. So active that its radiation ionizes surrounding air, producing an ethereal, ghostly pale-blue glow."],
+  [90,"Th","Torio","Thorium",232.04,9,"f",0,"[Rn] 6d2 7s2",1.3,0,9,"Actínido radiactivo plateado ligeramente más abundante que el uranio. Se investiga globalmente como un combustible nuclear alternativo que podría ser más seguro y generar menos residuos de largo plazo.","Silvery radioactive actinide slightly more abundant than uranium. Globally researched as an alternative nuclear fuel that could be safer and generate less long-term waste."],
+  [91,"Pa","Protactinio","Protactinium",231.04,9,"f",0,"[Rn] 5f2 6d1 7s2",1.5,0,9,"Actínido altamente radiactivo y extremadamente tóxico que se encuentra trazas en menas de uranio. Su rareza y toxicidad impiden que tenga usos prácticos comerciales significativos en la actualidad.","Highly radioactive, extremely toxic actinide found in trace amounts in uranium ores. Its rarity and toxicity prevent any significant commercial practical uses today."],
+  [92,"U","Uranio","Uranium",238.03,9,"f",0,"[Rn] 5f3 6d1 7s2",1.38,0,9,"Metal denso radiactivo que transformó la historia geopolítica. Es el combustible principal y esencial utilizado para sostener reacciones nucleares en cadena dentro de reactores y armamento nuclear.","Dense radioactive metal that transformed geopolitical history. It is the primary, essential fuel used to sustain nuclear chain reactions within power reactors and weaponry."],
+  [93,"Np","Neptunio","Neptunium",237,9,"f",0,"[Rn] 5f4 6d1 7s2",1.36,0,9,"Es el primer elemento transuránico sintético producido en laboratorios. Subproducto radiactivo de los reactores nucleares, se usa principalmente en equipos detectores de neutrones ultra-sensibles.","The first synthetic transuranic element produced in labs. A radioactive byproduct of nuclear reactors, primarily used in ultra-sensitive neutron detection equipment."],
+  [94,"Pu","Plutonio","Plutonium",244,9,"f",0,"[Rn] 5f6 7s2",1.28,0,9,"Uno de los actínidos más críticos del mundo, fundamental como explosivo base para armas nucleares modernas de fisión. Su isótopo Pu-238 ha energizado misiones de sondas espaciales de la NASA.","One of the world's most critical actinides, fundamental as the core explosive for modern nuclear fission weapons. Its Pu-238 isotope has powered NASA deep space probes."],
+  [95,"Am","Americio","Americium",243,9,"f",0,"[Rn] 5f7 7s2",1.3,0,9,"Actínido sintético radiactivo producido en reactores. Es el único elemento radiactivo sintético que la mayoría de la gente tiene en casa, ya que pequeñas cantidades alimentan detectores de humo.","Synthetic radioactive actinide produced in reactors. The only synthetic radioactive element most people have at home, as trace amounts power household smoke detectors."],
+  [96,"Cm","Curio","Curium",247,9,"f",0,"[Rn] 5f7 6d1 7s2",1.3,0,9,"Elemento radiactivo sintético denso, duro y quebradizo. Nombrado en honor a Pierre y Marie Curie. Destaca por emitir una cantidad tremenda de energía térmica debido a su alta desintegración radiactiva.","Dense, hard, brittle synthetic radioactive element. Named after Pierre and Marie Curie. Notable for emitting a tremendous amount of thermal energy due to high radioactive decay."],
+  [97,"Bk","Berkelio","Berkelium",247,9,"f",0,"[Rn] 5f9 7s2",1.3,0,9,"Elemento radiactivo de las tierras raras sintético. Producido por primera vez en la Universidad de Berkeley, California, no tiene aplicaciones fuera de la investigación química transuránica fundamental.","Synthetic radioactive rare earth element. First produced at UC Berkeley, California, it has no applications outside of fundamental transuranic chemical research."],
+  [98,"Cf","Californio","Californium",251,9,"f",0,"[Rn] 5f10 7s2",1.3,0,9,"Extraordinariamente costoso y potente emisor artificial de neutrones. Una cantidad microscópica emite millones de neutrones, utilizados para iniciar reactores nucleares y escanear oro en prospecciones.","Extraordinarily expensive and potent artificial neutron emitter. A microscopic amount emits millions of neutrons, used to start nuclear reactors and prospect for gold."],
+  [99,"Es","Einstenio","Einsteinium",252,9,"f",0,"[Rn] 5f11 7s2",1.3,0,9,"Elemento altamente radiactivo nombrado en honor a Albert Einstein. Fue descubierto sorprendentemente por primera vez analizando los escombros radiactivos resultantes de la primera bomba de hidrógeno.","Highly radioactive element named after Albert Einstein. Surprisingly, it was first discovered by analyzing the radioactive debris resulting from the first hydrogen bomb."],
+  [100,"Fm","Fermio","Fermium",257,9,"f",0,"[Rn] 5f12 7s2",1.3,0,9,"El elemento más pesado del universo que aún puede formarse mediante el bombardeo de neutrones sobre elementos más ligeros. Todo elemento con número atómico superior debe formarse en aceleradores.","The heaviest element in the universe that can still be formed by neutron bombardment of lighter elements. All elements with higher atomic numbers require particle accelerators."],
+  [101,"Md","Mendelevio","Mendelevium",258,9,"f",0,"[Rn] 5f13 7s2",1.3,0,9,"Sintetizado artificialmente y nombrado en honor a Dmitri Mendeleiev, el brillante creador de la tabla periódica original. Nunca se han sintetizado cantidades microscópicas estables de este elemento.","Artificially synthesized and named after Dmitri Mendeleev, the brilliant creator of the original periodic table. Macroscopic stable quantities have never been synthesized."],
+  [102,"No","Nobelio","Nobelium",259,9,"f",0,"[Rn] 5f14 7s2",1.3,0,9,"Elemento transuránico superpesado que rinde homenaje póstumo a Alfred Nobel. Como con la mayoría de estos elementos masivos, decae en apenas unos pocos minutos y existe solo para investigación científica.","Superheavy transuranic element paying posthumous tribute to Alfred Nobel. Like most massive elements, it decays in mere minutes and exists solely for scientific research."],
+  [103,"Lr","Lawrencio","Lawrencium",266,9,"d",0,"[Rn] 5f14 7s2 7p1",1.3,3,7,"El elemento que marca el final absoluto de la serie de los actínidos. Extremadamente inestable y radiactivo, su investigación requiere detectores de partículas increíblemente rápidos debido a su corta vida.","The element marking the absolute end of the actinide series. Extremely unstable and radioactive, its research requires incredibly fast particle detectors due to its short life."],
+  [104,"Rf","Rutherfordio","Rutherfordium",267,2,"d",3,"[Rn] 5f14 6d2 7s2",null,4,7,"Marca el inicio oficial de los metales de transición superpesados post-actínidos. Nombrado por Ernest Rutherford. Se produce estrellando átomos en un ciclotrón y decae en instantes.","Marks the official start of post-actinide superheavy transition metals. Named for Ernest Rutherford. Produced by smashing atoms in a cyclotron and decays instantly."],
+  [105,"Db","Dubnio","Dubnium",268,2,"d",3,"[Rn] 5f14 6d3 7s2",null,5,7,"Elemento superpesado intensamente inestable. Fue nombrado tras la ciudad de Dubna, Rusia, sede del centro de investigación donde científicos soviéticos y estadounidenses competían por sintetizarlo.","Intensely unstable superheavy element. Named after Dubna, Russia, home to the research center where Soviet and American scientists competed to synthesize it."],
+  [106,"Sg","Seaborgio","Seaborgium",269,2,"d",3,"[Rn] 5f14 6d4 7s2",null,6,7,"Elemento sintético radiactivo que causó polémica al ser nombrado en honor al científico vivo Glenn T. Seaborg (quien estructuró la serie de los actínidos). No existe fuera de aceleradores de iones.","Synthetic radioactive element that caused controversy by being named after living scientist Glenn T. Seaborg (who structured the actinides). Doesn't exist outside ion accelerators."],
+  [107,"Bh","Bohrio","Bohrium",270,2,"d",3,"[Rn] 5f14 6d5 7s2",null,7,7,"Nombrado formalmente en honor al físico cuántico Niels Bohr. Es un elemento superpesado tan inestable que su química se estudia estadísticamente registrando la desintegración de unos pocos átomos aislados.","Formally named after quantum physicist Niels Bohr. A superheavy element so unstable its chemistry is studied statistically by recording the decay of isolated single atoms."],
+  [108,"Hs","Hassio","Hassium",277,2,"d",3,"[Rn] 5f14 6d6 7s2",null,8,7,"Pertenece al mismo grupo químico que el osmio y, teóricamente, debería formar el compuesto volátil más denso que existe si se pudiera estabilizar el tiempo suficiente. Nombrado por el estado alemán de Hesse.","Belongs to the same group as osmium and theoretically should form the densest volatile compound known if stabilized long enough. Named after the German state of Hesse."],
+  [109,"Mt","Meitnerio","Meitnerium",278,10,"d",3,"[Rn] 5f14 6d7 7s2",null,9,7,"Honra de manera póstuma a la eminente física austriaca Lise Meitner, descubridora teórica de la fisión nuclear. Es un metal superpesado cuyas propiedades macroscópicas solo pueden extrapolarse.","Posthumously honors eminent Austrian physicist Lise Meitner, theoretical discoverer of nuclear fission. A superheavy metal whose macroscopic properties can only be extrapolated."],
+  [110,"Ds","Darmstadtio","Darmstadtium",281,10,"d",3,"[Rn] 5f14 6d8 7s2",null,10,7,"Otro gigante sintético y efímero creado mediante la fusión de isótopos pesados de plomo y níquel dentro de un acelerador de iones pesados. Toma su nombre de la ciudad alemana de Darmstadt.","Another synthetic, ephemeral giant created by fusing heavy isotopes of lead and nickel inside a heavy-ion accelerator. Takes its name from the German city of Darmstadt."],
+  [111,"Rg","Roentgenio","Roentgenium",282,10,"d",3,"[Rn] 5f14 6d9 7s2",null,11,7,"Pertenece al grupo de los metales de acuñación (cobre, plata, oro), pero sus contados átomos decaen radiactivamente en fracciones de segundo. Nombrado en honor al descubridor de los rayos X, Wilhelm Röntgen.","Belongs to the coinage metal group (copper, silver, gold), but its counted atoms radioactively decay in fractions of a second. Named after X-ray discoverer Wilhelm Röntgen."],
+  [112,"Cn","Copernicio","Copernicium",285,2,"d",3,"[Rn] 5f14 6d10 7s2",null,12,7,"Un elemento superpesado inusual que teóricamente podría ser un metal volátil gaseoso a temperatura ambiente debido a masivos efectos relativistas en sus electrones orbitales. Honra a Nicolás Copérnico.","An unusual superheavy element theoretically predicted to be a volatile gaseous metal at room temperature due to massive relativistic effects on orbital electrons. Honors Nicolaus Copernicus."],
+  [113,"Nh","Nihonio","Nihonium",286,10,"p",3,"[Rn] 5f14 6d10 7s2 7p1",null,13,7,"Sintetizado en Japón mediante el bombardeo de bismuto con iones de zinc a la velocidad de la luz. Su nombre proviene de 'Nihon', la palabra nativa para denominar al territorio de Japón.","Synthesized in Japan by bombarding bismuth with zinc ions at light speed. Its name stems from 'Nihon', the native word for the territory of Japan."],
+  [114,"Fl","Flerovio","Flerovium",289,10,"p",3,"[Rn] 5f14 6d10 7s2 7p2",null,14,7,"Un átomo gigantesco que se investiga agresivamente para comprobar si forma parte de la hipotética 'isla de estabilidad', donde los elementos superpesados podrían no decaer inmediatamente.","A giant atom aggressively researched to verify if it's part of the hypothetical 'island of stability', where superheavy elements might not decay immediately."],
+  [115,"Mc","Moscovio","Moscovium",290,10,"p",3,"[Rn] 5f14 6d10 7s2 7p3",null,15,7,"Sintetizado de manera conjunta por científicos estadounidenses y rusos. Como la mayoría de elementos con número atómico superior a 110, se estudian solo uno o dos átomos individuales a la vez.","Jointly synthesized by American and Russian scientists. Like most elements with atomic numbers above 110, only one or two individual atoms are studied at a time."],
+  [116,"Lv","Livermorio","Livermorium",293,10,"p",3,"[Rn] 5f14 6d10 7s2 7p4",null,16,7,"Reconocimiento directo al histórico y pionero Laboratorio Nacional Lawrence Livermore en California por su incalculable contribución matemática y física al descubrimiento de elementos superpesados.","Direct recognition of the historic, pioneering Lawrence Livermore National Laboratory in California for its invaluable mathematical and physical contributions to superheavy element discovery."],
+  [117,"Ts","Tenesino","Tennessine",294,10,"p",3,"[Rn] 5f14 6d10 7s2 7p5",null,17,7,"El segundo elemento más pesado sintetizado hasta ahora. Clasificado formalmente como un halógeno, aunque los efectos relativistas cuánticos predecirían que se comporte mucho más parecido a un metal post-transición sólido.","The second heaviest element synthesized thus far. Formally classified as a halogen, though relativistic quantum effects predict it to behave much more like a solid post-transition metal."],
+  [118,"Og","Oganesón","Oganesson",294,10,"p",3,"[Rn] 5f14 6d10 7s2 7p6",null,18,7,"El ápice de la tabla periódica actual y el elemento más pesado jamás creado por la humanidad. Su extremada masa deforma sus órbitas cuánticas tanto que se cree que no es un gas noble estable, sino un sólido hiperreactivo.","The apex of the current periodic table and the heaviest element ever created by humanity. Its extreme mass deforms its quantum orbits so much it's believed not to be a stable noble gas, but a hyper-reactive solid."]
+];
+
+const ELEMENTS = RAW_DATA.map(e => ({
+  z: e[0], symbol: e[1], nameEs: e[2], nameEn: e[3], mass: e[4],
+  category: e[5], block: e[6], state: e[7], config: e[8],
+  electronegativity: e[9], group: e[10], period: e[11],
+  descEs: e[12], descEn: e[13]
+}));
+
+// --- THREE JS SCRIPT INJECTION ---
+const loadThreeJS = () => {
+  return new Promise((resolve, reject) => {
+    if (window.THREE) return resolve(window.THREE);
+    const script = document.createElement('script');
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+    script.onload = () => resolve(window.THREE);
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+};
+
+// --- COMPONENTS ---
+
+// 3D SIMULATION COMPONENT
+const Simulation3D = ({ element, modelType, langStr }) => {
+  const mountRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const t = DICT[langStr];
+
+  useEffect(() => {
+    let scene, camera, renderer, animationId;
+    let particles = [];
+    let core, orbits = [];
+
+    const init = async () => {
+      setLoading(true);
+      const THREE = await loadThreeJS();
+      setLoading(false);
+
+      if (!mountRef.current) return;
+      mountRef.current.innerHTML = ''; 
+
+      const width = mountRef.current.clientWidth;
+      const height = mountRef.current.clientHeight;
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      camera.position.z = 25;
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      mountRef.current.appendChild(renderer.domElement);
+
+      const color = CAT_COLORS[element.category] || "#ffffff";
+
+      // NUCLEUS
+      const coreGeo = new THREE.SphereGeometry(1.5, 32, 32);
+      const coreMat = new THREE.MeshBasicMaterial({ color: color });
+      core = new THREE.Mesh(coreGeo, coreMat);
+      scene.add(core);
+
+      if (modelType === 'bohr') {
+        // Bohr Model
+        const maxShells = Math.min(element.period, 7); 
+        const electrons = Math.min(element.z, 118); 
+
+        for (let i = 1; i <= maxShells; i++) {
+          const radius = i * 3.5;
+          const orbitGeo = new THREE.RingGeometry(radius - 0.05, radius + 0.05, 64);
+          const orbitMat = new THREE.MeshBasicMaterial({ color: 0x444444, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
+          const orbit = new THREE.Mesh(orbitGeo, orbitMat);
+          orbit.rotation.x = Math.PI / 2;
+          orbits.push(orbit);
+          scene.add(orbit);
+
+          const maxElectronsInShell = 2 * (i * i);
+          const eInThisShell = Math.min(electrons - particles.length, maxElectronsInShell);
+          if (eInThisShell > 0) {
+            for (let j = 0; j < eInThisShell; j++) {
+              const eGeo = new THREE.SphereGeometry(0.3, 16, 16);
+              const eMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+              const electron = new THREE.Mesh(eGeo, eMat);
+              const angle = (j / eInThisShell) * Math.PI * 2;
+              electron.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+              
+              const eObj = new THREE.Group();
+              eObj.add(electron);
+              eObj.rotation.x = (Math.random() - 0.5) * 0.5;
+              eObj.rotation.z = (Math.random() - 0.5) * 0.5;
+              
+              eObj.userData = { speed: (0.02 + Math.random() * 0.02) * (i % 2 === 0 ? 1 : -1) };
+              particles.push(eObj);
+              scene.add(eObj);
+            }
+          }
+        }
+      } else {
+        // Quantum Model
+        const pGeo = new THREE.BufferGeometry();
+        const pCount = Math.min(element.z * 150, 7000); 
+        const pArr = new Float32Array(pCount * 3);
+        const pColors = new Float32Array(pCount * 3);
+        const baseColor = new THREE.Color(color);
+
+        for(let i = 0; i < pCount * 3; i+=3) {
+          const u = Math.random();
+          const v = Math.random();
+          const theta = u * 2.0 * Math.PI;
+          const phi = Math.acos(2.0 * v - 1.0);
+          const r = Math.cbrt(Math.random()) * (4 + element.period * 1.5); 
+
+          pArr[i] = r * Math.sin(phi) * Math.cos(theta);
+          pArr[i+1] = r * Math.sin(phi) * Math.sin(theta);
+          pArr[i+2] = r * Math.cos(phi);
+
+          pColors[i] = baseColor.r * (Math.random() * 0.5 + 0.5);
+          pColors[i+1] = baseColor.g * (Math.random() * 0.5 + 0.5);
+          pColors[i+2] = baseColor.b * (Math.random() * 0.5 + 0.5);
+        }
+
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pArr, 3));
+        pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
+        const pMat = new THREE.PointsMaterial({
+          size: 0.1, vertexColors: true, transparent: true, opacity: 0.6
+        });
+        const cloud = new THREE.Points(pGeo, pMat);
+        particles.push(cloud);
+        scene.add(cloud);
+      }
+
+      // Interact - Drag to rotate & Scroll to zoom
+      let isDragging = false;
+      let previousMousePosition = { x: 0, y: 0 };
+      
+      const onMouseDown = () => { isDragging = true; };
+      const onMouseUp = () => { isDragging = false; };
+      const onMouseMove = (e) => {
+        if (isDragging) {
+          const deltaMove = { x: e.movementX, y: e.movementY };
+          scene.rotation.y += deltaMove.x * 0.01;
+          scene.rotation.x += deltaMove.y * 0.01;
+        }
+      };
+
+      const onWheel = (e) => {
+        e.preventDefault();
+        camera.position.z += e.deltaY * 0.05;
+        // Clamp Zoom
+        camera.position.z = Math.max(8, Math.min(camera.position.z, 60));
+      };
+
+      const domElement = renderer.domElement;
+      domElement.addEventListener('mousedown', onMouseDown);
+      window.addEventListener('mouseup', onMouseUp);
+      domElement.addEventListener('mousemove', onMouseMove);
+      domElement.addEventListener('wheel', onWheel, { passive: false });
+
+      // Resize
+      const handleResize = () => {
+        if (!mountRef.current) return;
+        const w = mountRef.current.clientWidth;
+        const h = mountRef.current.clientHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      };
+      window.addEventListener('resize', handleResize);
+
+      // Animation loop
+      const animate = () => {
+        animationId = requestAnimationFrame(animate);
+        
+        if (core) {
+           core.scale.setScalar(1 + Math.sin(Date.now() * 0.01) * 0.02);
+        }
+
+        if (modelType === 'bohr') {
+          particles.forEach(p => p.rotation.y += p.userData.speed);
+          orbits.forEach(o => o.rotation.z += 0.001);
+        } else {
+          particles.forEach(p => {
+             p.rotation.y += 0.005;
+             p.rotation.x += 0.002;
+          });
+        }
+        
+        renderer.render(scene, camera);
+      };
+
+      animate();
+
+      return () => {
+        cancelAnimationFrame(animationId);
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('mouseup', onMouseUp);
+        domElement.removeEventListener('wheel', onWheel);
+        if (mountRef.current && domElement) {
+          mountRef.current.removeChild(domElement);
+        }
+      };
+    };
+
+    const cleanup = init();
+    return () => { cleanup.then(f => f && f()); };
+  }, [element, modelType]);
+
+  return (
+    <div className="relative w-full h-full bg-gradient-to-br from-[#0f1522] to-[#1a2235] flex items-center justify-center overflow-hidden">
+      {loading && <div className="text-cyan-500 animate-pulse font-mono tracking-widest">Inicializando Motor 3D...</div>}
+      
+      <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" title={t.zoomTip} />
+      
+      {/* HUD: Interaction Tip */}
+      <div className="absolute top-4 left-4 flex gap-2 items-center text-gray-400 bg-gray-900/60 px-3 py-1.5 rounded backdrop-blur-sm border border-gray-700 pointer-events-none">
+        <ZoomIn className="w-4 h-4" />
+        <span className="text-xs font-mono">{t.zoomTip}</span>
+      </div>
+
+      {/* HUD: Conventions Legend */}
+      <div className="absolute bottom-4 left-4 bg-gray-900/80 p-3 rounded-lg backdrop-blur-md border border-gray-700 pointer-events-none text-xs">
+        <h4 className="font-bold text-gray-300 mb-2 border-b border-gray-700 pb-1 uppercase tracking-wider">{t.legend}</h4>
+        <div className="flex flex-col gap-1.5 text-gray-400">
+           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={{backgroundColor: CAT_COLORS[element.category]}}></div> {t.legendNucleus}</div>
+           {modelType === 'bohr' ? (
+             <>
+               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-white"></div> {t.legendElectrons}</div>
+               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full border border-gray-500"></div> {t.legendOrbits}</div>
+             </>
+           ) : (
+             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full opacity-50" style={{backgroundColor: CAT_COLORS[element.category]}}></div> {t.legendClouds}</div>
+           )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// MAIN APP COMPONENT
+function App() {
+  const [lang, setLang] = useState('es');
+  const [activeTab, setActiveTab] = useState('table');
+  const [selectedElement, setSelectedElement] = useState(null);
+  const [search, setSearch] = useState('');
+  const [studyMode, setStudyMode] = useState(false);
+  const [modelType, setModelType] = useState('quantum');
+
+  const [fState, setFState] = useState('all');
+  const [fBlock, setFBlock] = useState('all');
+  const [fCat, setFCat] = useState('all');
+
+  const t = DICT[lang];
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  const filteredElements = useMemo(() => {
+    return ELEMENTS.filter(el => {
+      const matchSearch = el.nameEs.toLowerCase().includes(search.toLowerCase()) || 
+                          el.nameEn.toLowerCase().includes(search.toLowerCase()) ||
+                          el.symbol.toLowerCase().includes(search.toLowerCase()) ||
+                          el.z.toString() === search;
+      
+      const statesMap = { 'all': -1, 'solid': 0, 'liquid': 1, 'gas': 2, 'unknown': 3 };
+      const matchState = fState === 'all' || el.state === statesMap[fState];
+      const matchBlock = fBlock === 'all' || el.block === fBlock;
+      const matchCat = fCat === 'all' || el.category.toString() === fCat;
+
+      return matchSearch && matchState && matchBlock && matchCat;
+    });
+  }, [search, fState, fBlock, fCat]);
+
+  const toggleLang = () => setLang(l => l === 'es' ? 'en' : 'es');
+
+  const handleElementClick = (el) => {
+    setSelectedElement(el);
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+  };
+
+  const closeModal = () => {
+    setSelectedElement(null);
+    document.body.style.overflow = 'auto';
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') closeModal();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[#0a0e17] text-[#f0f4f8] font-sans selection:bg-cyan-500/30 flex flex-col">
+      
+      {/* HEADER */}
+      <header className="fixed top-0 w-full z-40 bg-[#0f1522]/90 backdrop-blur-md border-b border-gray-800 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('table')}>
+            <div className="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center font-bold text-[#0a0e17]">Q</div>
+            <h1 className="text-xl font-bold tracking-wider uppercase font-orbitron hidden sm:block">
+              <span className="text-cyan-400">Quantum</span>Sim
+            </h1>
+          </div>
+
+          <div className="flex-1 max-w-md mx-4 relative hidden md:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder={t.search}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-[#1a1f2e] border border-gray-700 rounded-full py-1.5 pl-10 pr-4 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 md:gap-4">
+            <button 
+              onClick={() => setActiveTab('table')}
+              className={`text-sm px-3 py-1.5 rounded-md transition-colors ${activeTab === 'table' ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-gray-800'}`}
+            >
+              <Layers className="w-4 h-4 inline-block md:mr-2" />
+              <span className="hidden md:inline">{t.periodicTable}</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('fundamentals')}
+              className={`text-sm px-3 py-1.5 rounded-md transition-colors ${activeTab === 'fundamentals' ? 'bg-cyan-500/20 text-cyan-400' : 'hover:bg-gray-800'}`}
+            >
+              <BookOpen className="w-4 h-4 inline-block md:mr-2" />
+              <span className="hidden md:inline">{t.fundamentals}</span>
+            </button>
+            <div className="h-6 w-px bg-gray-700 mx-1"></div>
+            <button 
+              onClick={toggleLang}
+              className="p-1.5 rounded-md hover:bg-gray-800 transition-colors text-gray-300 font-bold text-xs flex items-center gap-1"
+            >
+              <Globe className="w-4 h-4" /> {lang.toUpperCase()}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 mt-16 relative flex overflow-hidden">
+        
+        {/* TAB: FUNDAMENTALS */}
+        {activeTab === 'fundamentals' && (
+          <div className="max-w-4xl mx-auto p-6 md:p-12 w-full overflow-y-auto custom-scrollbar">
+            <h2 className="text-3xl font-bold mb-8 text-cyan-400 font-orbitron">{t.eduTitle}</h2>
+            
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="bg-[#1a1f2e] p-6 rounded-xl border border-gray-800 hover:border-cyan-500/50 transition-colors">
+                <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+                  <span className="bg-cyan-500/20 p-2 rounded text-cyan-400">Z</span>
+                  {t.atomicNumberLabel}
+                </h3>
+                <p className="text-gray-300">{t.eduZ}</p>
+              </div>
+
+              <div className="bg-[#1a1f2e] p-6 rounded-xl border border-gray-800 hover:border-orange-500/50 transition-colors">
+                <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+                  <span className="bg-orange-500/20 p-2 rounded text-orange-400">A</span>
+                  {t.atomicMassLabel}
+                </h3>
+                <p className="text-gray-300">{t.eduA}</p>
+              </div>
+
+              <div className="bg-[#1a1f2e] p-6 rounded-xl border border-gray-800 hover:border-purple-500/50 transition-colors md:col-span-2">
+                <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+                  <Info className="text-purple-400" />
+                  {t.modelsTitle}
+                </h3>
+                <div className="grid md:grid-cols-2 gap-6 mt-4">
+                  <div>
+                    <h4 className="font-bold text-gray-200 mb-2 border-b border-gray-700 pb-1">{t.bohrModel}</h4>
+                    <p className="text-gray-400 text-sm mb-4">{t.bohrDesc}</p>
+                    <div className="w-full h-32 bg-[#0f1522] rounded flex items-center justify-center border border-gray-800 shadow-inner">
+                       <svg width="80" height="80" viewBox="0 0 100 100">
+                         <circle cx="50" cy="50" r="10" fill="#f43f5e" />
+                         <circle cx="50" cy="50" r="25" fill="none" stroke="#4b5563" strokeWidth="1" />
+                         <circle cx="50" cy="50" r="40" fill="none" stroke="#4b5563" strokeWidth="1" />
+                         <circle cx="25" cy="50" r="3" fill="#60a5fa" />
+                         <circle cx="75" cy="50" r="3" fill="#60a5fa" />
+                         <circle cx="50" cy="10" r="3" fill="#60a5fa" />
+                       </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-200 mb-2 border-b border-gray-700 pb-1">{t.quantumModel}</h4>
+                    <p className="text-gray-400 text-sm mb-4">{t.quantumDesc}</p>
+                    <div className="w-full h-32 bg-[#0f1522] rounded flex items-center justify-center opacity-80 border border-gray-800 shadow-inner">
+                      <svg width="80" height="80" viewBox="0 0 100 100" className="blur-[1px]">
+                         <circle cx="50" cy="50" r="10" fill="#f43f5e" />
+                         <ellipse cx="50" cy="50" rx="15" ry="35" fill="rgba(6,182,212,0.3)" />
+                         <ellipse cx="50" cy="50" rx="35" ry="15" fill="rgba(6,182,212,0.3)" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: PERIODIC TABLE */}
+        {activeTab === 'table' && (
+          <div className="flex-1 flex flex-col p-2 md:p-6 w-full h-full">
+            
+            <div className="md:hidden flex gap-2 mb-4 shrink-0">
+              <input 
+                type="text" 
+                placeholder={t.search}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="flex-1 bg-[#1a1f2e] border border-gray-700 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-cyan-500"
+              />
+              <button 
+                 onClick={() => setStudyMode(!studyMode)}
+                 className={`p-2 border border-gray-700 rounded-md ${studyMode ? 'bg-purple-500/20 text-purple-400' : 'bg-[#1a1f2e] text-gray-400'}`}
+              >
+                {studyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+
+            <div className="hidden md:flex shrink-0 gap-4 mb-6 items-center flex-wrap bg-[#111827] p-3 rounded-xl border border-gray-800">
+              <span className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                <Settings2 className="w-4 h-4" /> {t.filters}
+              </span>
+              
+              <select value={fCat} onChange={(e)=>setFCat(e.target.value)} className="bg-[#1a1f2e] border border-gray-700 rounded px-2 py-1 text-sm focus:outline-none focus:border-cyan-500">
+                <option value="all">{t.category} ({t.all})</option>
+                {Object.entries(t.categories).map(([id, name]) => (
+                  <option key={id} value={id}>{name}</option>
+                ))}
+              </select>
+
+              <select value={fBlock} onChange={(e)=>setFBlock(e.target.value)} className="bg-[#1a1f2e] border border-gray-700 rounded px-2 py-1 text-sm focus:outline-none focus:border-cyan-500">
+                <option value="all">{t.block} ({t.all})</option>
+                {['s', 'p', 'd', 'f'].map(b => <option key={b} value={b}>Bloque {b}</option>)}
+              </select>
+
+              <select value={fState} onChange={(e)=>setFState(e.target.value)} className="bg-[#1a1f2e] border border-gray-700 rounded px-2 py-1 text-sm focus:outline-none focus:border-cyan-500">
+                <option value="all">{t.state} ({t.all})</option>
+                <option value="solid">{t.solid}</option>
+                <option value="liquid">{t.liquid}</option>
+                <option value="gas">{t.gas}</option>
+              </select>
+              
+              <div className="ml-auto flex items-center">
+                <button 
+                  onClick={() => setStudyMode(!studyMode)}
+                  className={`flex items-center gap-2 px-3 py-1 text-sm rounded transition-colors ${studyMode ? 'bg-purple-500/20 text-purple-400' : 'text-gray-400 hover:text-white'}`}
+                >
+                  {studyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {t.studyMode}
+                </button>
+              </div>
+            </div>
+
+            {/* Table Scrollable Area */}
+            <div className="flex-1 overflow-x-auto overflow-y-auto pb-8 custom-scrollbar relative">
+              <div className="min-w-[800px] grid gap-[2px] md:gap-1 pb-10 select-none"
+                   style={{ gridTemplateColumns: 'repeat(18, minmax(40px, 1fr))', gridTemplateRows: 'repeat(10, auto)' }}>
+                
+                {filteredElements.map((el) => {
+                  const isMatch = filteredElements.length === 118 || filteredElements.includes(el);
+                  const opacity = isMatch ? 'opacity-100' : 'opacity-20';
+                  const color = CAT_COLORS[el.category];
+                  
+                  // Proper Grid Coordinate Logic
+                  let r = el.period;
+                  let c = el.group;
+                  
+                  // For F-block elements, we calculate their positions manually below the main table
+                  if (el.z >= 57 && el.z <= 71) {
+                     r = 9; // Lanthanides row
+                     c = el.z - 57 + 4; // Starts at column 4
+                  } else if (el.z >= 89 && el.z <= 103) {
+                     r = 10; // Actinides row
+                     c = el.z - 89 + 4; // Starts at column 4
+                  } else {
+                     // Failsafe for missing group in main body (shouldn't happen with updated logic)
+                     if (!c || c < 1) c = 1; 
+                  }
+
+                  return (
+                    <div 
+                      key={el.z}
+                      onClick={() => handleElementClick(el)}
+                      style={{ 
+                        gridColumn: c, gridRow: r, 
+                        backgroundColor: `${color}15`, 
+                        borderColor: `${color}50` 
+                      }}
+                      className={`relative flex flex-col items-center justify-center p-1 border rounded-sm hover:scale-110 hover:z-10 transition-all cursor-pointer shadow-sm group ${opacity}`}
+                    >
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-sm" style={{ boxShadow: `0 0 10px ${color}` }}></div>
+                      
+                      <span className="absolute top-0.5 left-1 text-[8px] md:text-[10px] text-gray-400 z-10">{el.z}</span>
+                      <span className="absolute top-0.5 right-1 text-[7px] text-gray-600 opacity-0 group-hover:opacity-100 z-10 font-bold">{el.block}</span>
+                      
+                      <span className="text-sm md:text-lg font-bold font-exo mt-2 mb-0.5 z-10" style={{ color: color }}>
+                        {el.symbol}
+                      </span>
+                      
+                      {!studyMode && (
+                        <span className="text-[7px] md:text-[8px] whitespace-nowrap overflow-hidden text-ellipsis w-full text-center text-gray-300 z-10">
+                          {lang === 'es' ? el.nameEs : el.nameEn}
+                        </span>
+                      )}
+                      <span className="text-[6px] md:text-[7px] text-gray-500 font-mono hidden md:block z-10">
+                        {el.mass.toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })}
+
+                {/* Main Table Placeholders for F-Block */}
+                <div style={{ gridColumn: 3, gridRow: 6 }} className="flex flex-col items-center justify-center border border-pink-500/30 bg-pink-500/10 rounded-sm">
+                  <span className="text-[10px] text-pink-500">57-71</span><span className="text-[8px] text-pink-400/50">La-Lu</span>
+                </div>
+                <div style={{ gridColumn: 3, gridRow: 7 }} className="flex flex-col items-center justify-center border border-rose-500/30 bg-rose-500/10 rounded-sm">
+                   <span className="text-[10px] text-rose-500">89-103</span><span className="text-[8px] text-rose-400/50">Ac-Lr</span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* FULLSCREEN MODAL (DETAILS & SIMULATION) */}
+      <div 
+        className={`fixed inset-0 bg-[#0a0e17]/98 backdrop-blur-2xl z-50 flex flex-col transition-all duration-300 ease-in-out
+          ${selectedElement ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'} 
+        `}
+      >
+        {selectedElement && (
+          <div className="flex flex-col h-full w-full max-w-[1600px] mx-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 md:px-8 border-b border-gray-800 shrink-0" style={{ borderTop: `4px solid ${CAT_COLORS[selectedElement.category]}` }}>
+              <button 
+                onClick={closeModal} 
+                className="flex items-center gap-2 px-4 py-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" /> <span className="font-bold hidden md:inline">{t.backToTable}</span>
+              </button>
+              
+              <div className="flex items-center gap-4 absolute left-1/2 -translate-x-1/2">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded flex flex-col items-center justify-center bg-[#111827] border border-gray-700 shadow-inner">
+                  <span className="text-[10px] md:text-xs text-gray-400 -mb-1">{selectedElement.z}</span>
+                  <span className="text-xl md:text-2xl font-bold font-exo" style={{ color: CAT_COLORS[selectedElement.category] }}>{selectedElement.symbol}</span>
+                </div>
+                <div className="flex flex-col items-center md:items-start">
+                  <h2 className="text-xl md:text-3xl font-bold tracking-wide">{lang === 'es' ? selectedElement.nameEs : selectedElement.nameEn}</h2>
+                  <p className="text-xs md:text-sm text-gray-400">{t.categories[selectedElement.category]}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body: Split Screen */}
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+              
+              {/* Left Side: 3D Simulation */}
+              <div className="relative w-full lg:w-3/5 h-[40vh] lg:h-full border-b lg:border-b-0 lg:border-r border-gray-800 flex shrink-0">
+                <div className="absolute top-4 right-4 z-10 flex gap-2 bg-gray-900/90 p-1.5 rounded-lg backdrop-blur-md border border-gray-700 shadow-xl">
+                   <button 
+                     onClick={() => setModelType('bohr')}
+                     className={`text-xs md:text-sm px-3 py-1.5 rounded transition-all ${modelType === 'bohr' ? 'bg-cyan-500 text-[#0a0e17] font-bold shadow-md' : 'text-gray-400 hover:text-white'}`}
+                   >
+                     {t.bohrModel}
+                   </button>
+                   <button 
+                     onClick={() => setModelType('quantum')}
+                     className={`text-xs md:text-sm px-3 py-1.5 rounded transition-all ${modelType === 'quantum' ? 'bg-cyan-500 text-[#0a0e17] font-bold shadow-md' : 'text-gray-400 hover:text-white'}`}
+                   >
+                     {t.quantumModel}
+                   </button>
+                </div>
+                <Simulation3D element={selectedElement} modelType={modelType} langStr={lang} />
+              </div>
+
+              {/* Right Side: Information Panel */}
+              <div className="w-full lg:w-2/5 h-full overflow-y-auto custom-scrollbar p-6 lg:p-10 bg-[#111827]">
+                
+                {/* Description Box */}
+                <div className="mb-8">
+                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <Info className="w-4 h-4 text-cyan-500" /> {t.descriptionTitle}
+                  </h3>
+                  <p className="text-gray-200 leading-relaxed font-nunito text-lg">
+                    {lang === 'es' ? selectedElement.descEs : selectedElement.descEn}
+                  </p>
+                </div>
+
+                {/* Data Grid */}
+                <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                  <DataBox label={t.mass} value={selectedElement.mass.toFixed(4)} unit="u" />
+                  <DataBox label={t.config} value={selectedElement.config} font="font-mono text-cyan-400" />
+                  <DataBox label={t.electronegativity} value={selectedElement.electronegativity || t.noData} />
+                  <DataBox label={t.state} value={
+                    selectedElement.state === 0 ? t.solid : 
+                    selectedElement.state === 1 ? t.liquid : 
+                    selectedElement.state === 2 ? t.gas : t.unknown
+                  } />
+                  <DataBox label={t.block} value={`Bloque ${selectedElement.block.toUpperCase()}`} />
+                  <DataBox label={t.groupPeriod} value={`${selectedElement.group || '-'} / ${selectedElement.period}`} />
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* FOOTER */}
+      <footer className="bg-[#0f1522] border-t border-gray-800 py-6 text-center text-sm text-gray-500 mt-auto shrink-0 z-30 relative">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6">
+          <p>{t.developedBy}</p>
+          <a href="http://juantomoo.github.io/" target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:text-cyan-400 transition-colors flex items-center gap-1">
+            <Globe className="w-4 h-4" /> juantomoo.github.io
+          </a>
+          <p>{t.license}</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// Helper Component for Data Boxes
+function DataBox({ label, value, unit = "", font = "font-sans" }) {
+  return (
+    <div className="bg-[#1a1f2e] p-4 rounded-xl border border-gray-800/50 flex flex-col justify-center shadow-sm hover:border-cyan-500/30 transition-colors">
+      <span className="text-[10px] md:text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</span>
+      <span className={`text-lg md:text-xl font-medium text-gray-100 ${font}`}>{value} <span className="text-sm text-gray-500">{unit}</span></span>
+    </div>
+  );
+}
+
+// Base CSS injected for scrollbar and fonts
+const style = document.createElement('style');
+style.innerHTML = `
+  @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=JetBrains+Mono&family=Nunito:wght@400;600&family=Orbitron:wght@500;700&display=swap');
+
+  body { margin: 0; }
+  .font-orbitron { font-family: 'Orbitron', sans-serif; }
+  .font-exo { font-family: 'Exo 2', sans-serif; }
+  .font-nunito { font-family: 'Nunito', sans-serif; }
+  
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4a5568; }
+`;
+document.head.appendChild(style);
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+  </script>
+</body>
+</html>
