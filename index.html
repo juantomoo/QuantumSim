@@ -113,6 +113,12 @@ const ZoomIn = (props) => (
   </IconBase>
 );
 
+const Sigma = (props) => (
+  <IconBase {...props}>
+    <path d="M18 4H7l6 8-6 8h11" />
+  </IconBase>
+);
+
 // --- DICTIONARY ---
 const DICT = {
   es: {
@@ -247,6 +253,11 @@ const DICT = {
     legendOrbits: "Niveles de Energía (Órbitas)",
     legendCloudPoints: "Puntos de muestreo electrónico",
     legendClouds: "Nube de probabilidad (densidad orbital)",
+    visualControls: "Control visual cuántico",
+    pointSizeLabel: "Tamaño de punto",
+    cloudOpacityLabel: "Opacidad",
+    cloudContrastLabel: "Contraste",
+    resetVisuals: "Restablecer",
     zoomTip: "Arrastra para rotar • Scroll para zoom",
     backToTable: "Volver a la Tabla",
     categories: {
@@ -386,6 +397,11 @@ const DICT = {
     legendOrbits: "Energy Levels (Orbits)",
     legendCloudPoints: "Electron sampling points",
     legendClouds: "Probability cloud (orbital density)",
+    visualControls: "Quantum visual controls",
+    pointSizeLabel: "Point size",
+    cloudOpacityLabel: "Opacity",
+    cloudContrastLabel: "Contrast",
+    resetVisuals: "Reset",
     zoomTip: "Drag to rotate • Scroll to zoom",
     backToTable: "Back to Table",
     categories: {
@@ -724,7 +740,7 @@ function sampleOrbitalPoint(orbital) {
 // --- COMPONENTS ---
 
 // 3D SIMULATION COMPONENT
-const Simulation3D = ({ element, modelType, langStr }) => {
+const Simulation3D = ({ element, modelType, langStr, quantumVisual }) => {
   const mountRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const t = DICT[langStr];
@@ -797,6 +813,10 @@ const Simulation3D = ({ element, modelType, langStr }) => {
         }
       } else {
         // Quantum Model
+        const pointSize = quantumVisual?.pointSize ?? 0.11;
+        const pointOpacity = quantumVisual?.opacity ?? 0.68;
+        const contrastPower = quantumVisual?.contrastPower ?? 0.58;
+
         const pGeo = new THREE.BufferGeometry();
         const pCount = Math.min(Math.max(2600, element.z * 140 + element.period * 220), 14000);
         const pArr = new Float32Array(pCount * 3);
@@ -832,7 +852,7 @@ const Simulation3D = ({ element, modelType, langStr }) => {
           const probDensity = Math.exp(-Math.pow(dist / Math.max(0.001, sigma), 2));
           const occupancyFactor = 0.55 + 0.45 * (selected.weight / maxWeight);
           const localDensity = Math.max(0, Math.min(1, probDensity * occupancyFactor));
-          const contrast = Math.pow(localDensity, 0.58);
+          const contrast = Math.pow(localDensity, contrastPower);
           const lightness = 0.18 + contrast * 1.55;
 
           pColors[i] = Math.min(1, baseColor.r * lightness);
@@ -843,11 +863,11 @@ const Simulation3D = ({ element, modelType, langStr }) => {
         pGeo.setAttribute('position', new THREE.BufferAttribute(pArr, 3));
         pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
         const pMat = new THREE.PointsMaterial({
-          size: 0.11,
+          size: pointSize,
           sizeAttenuation: true,
           vertexColors: true,
           transparent: true,
-          opacity: 0.68,
+          opacity: pointOpacity,
           depthWrite: false,
           blending: THREE.AdditiveBlending
         });
@@ -930,7 +950,7 @@ const Simulation3D = ({ element, modelType, langStr }) => {
 
     const cleanup = init();
     return () => { cleanup.then(f => f && f()); };
-  }, [element, modelType]);
+  }, [element, modelType, quantumVisual]);
 
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-[#0f1522] to-[#1a2235] flex items-center justify-center overflow-hidden">
@@ -975,6 +995,11 @@ function App() {
   const [search, setSearch] = useState('');
   const [studyMode, setStudyMode] = useState(false);
   const [modelType, setModelType] = useState('quantum');
+  const [quantumVisual, setQuantumVisual] = useState({
+    pointSize: 0.11,
+    opacity: 0.68,
+    contrastPower: 0.58
+  });
 
   const [fState, setFState] = useState('all');
   const [fBlock, setFBlock] = useState('all');
@@ -1342,7 +1367,55 @@ function App() {
                      {t.quantumModel}
                    </button>
                 </div>
-                <Simulation3D element={selectedElement} modelType={modelType} langStr={lang} />
+
+                {modelType === 'quantum' && (
+                  <div className="absolute top-16 right-4 z-10 w-64 bg-gray-900/90 p-3 rounded-lg backdrop-blur-md border border-gray-700 shadow-xl text-xs">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-bold text-cyan-300 uppercase tracking-wider">{t.visualControls}</h4>
+                      <button
+                        onClick={() => setQuantumVisual({ pointSize: 0.11, opacity: 0.68, contrastPower: 0.58 })}
+                        className="text-[10px] px-2 py-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300"
+                      >
+                        {t.resetVisuals}
+                      </button>
+                    </div>
+
+                    <label className="block text-gray-300 mb-1">{t.pointSizeLabel}: <span className="text-cyan-300 font-mono">{quantumVisual.pointSize.toFixed(2)}</span></label>
+                    <input
+                      type="range"
+                      min="0.07"
+                      max="0.18"
+                      step="0.005"
+                      value={quantumVisual.pointSize}
+                      onChange={(e) => setQuantumVisual(v => ({ ...v, pointSize: Number(e.target.value) }))}
+                      className="w-full mb-3 accent-cyan-400"
+                    />
+
+                    <label className="block text-gray-300 mb-1">{t.cloudOpacityLabel}: <span className="text-cyan-300 font-mono">{quantumVisual.opacity.toFixed(2)}</span></label>
+                    <input
+                      type="range"
+                      min="0.35"
+                      max="0.95"
+                      step="0.01"
+                      value={quantumVisual.opacity}
+                      onChange={(e) => setQuantumVisual(v => ({ ...v, opacity: Number(e.target.value) }))}
+                      className="w-full mb-3 accent-cyan-400"
+                    />
+
+                    <label className="block text-gray-300 mb-1">{t.cloudContrastLabel}: <span className="text-cyan-300 font-mono">{quantumVisual.contrastPower.toFixed(2)}</span></label>
+                    <input
+                      type="range"
+                      min="0.40"
+                      max="0.95"
+                      step="0.01"
+                      value={quantumVisual.contrastPower}
+                      onChange={(e) => setQuantumVisual(v => ({ ...v, contrastPower: Number(e.target.value) }))}
+                      className="w-full accent-cyan-400"
+                    />
+                  </div>
+                )}
+
+                <Simulation3D element={selectedElement} modelType={modelType} langStr={lang} quantumVisual={quantumVisual} />
               </div>
 
               {/* Right Side: Information Panel */}
