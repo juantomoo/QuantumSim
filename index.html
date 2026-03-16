@@ -146,8 +146,8 @@ const DICT = {
     year: "Año de Descubrimiento",
     developedBy: "Desarrollado por JuanTomoo",
     license: "Licencia MIT",
-    bohrDesc: "El modelo de Bohr muestra los electrones orbitando el núcleo en niveles de energía fijos y circulares.",
-    quantumDesc: "El modelo cuántico representa electrones como densidades de probabilidad, con geometrías s, p, d y f según la configuración electrónica del elemento.",
+    bohrDesc: "El modelo de Bohr representa electrones en órbitas circulares cuantizadas, con capacidad por capa 2n² y radios crecientes.",
+    quantumDesc: "El modelo cuántico visualiza una distribución de probabilidad electrónica (muestras de densidad) con formas s, p, d y f derivadas de la configuración electrónica.",
     eduTitle: "Fundamentos de la Química Cuántica",
     keyConceptsTitle: "Conceptos clave para aprender",
     eduZ: "Número Atómico (Z): Representa el número de protones en el núcleo de un átomo. Define la identidad del elemento.",
@@ -196,10 +196,57 @@ const DICT = {
       }
     ],
     noData: "Sin datos",
-    legendNucleus: "Núcleo (Protones/Neutrones)",
+    formulasTitle: "Fórmulas del simulador (matemática y física)",
+    formulasIntro: "Estas expresiones explican cómo se dibujan el núcleo, el modelo de Bohr y la nube cuántica.",
+    formulas: [
+      {
+        title: "Conteo de neutrones",
+        formula: "N ≈ A − Z",
+        text: "Aproxima neutrones restando el número atómico (Z) de la masa atómica redondeada (A)."
+      },
+      {
+        title: "Escala del núcleo",
+        formula: "R_núcleo ∝ A^(1/3)",
+        text: "El radio nuclear crece con la raíz cúbica del número másico A; en la simulación se normaliza para una visualización estable."
+      },
+      {
+        title: "Capacidad de capas de Bohr",
+        formula: "C_n = 2n²",
+        text: "Cada nivel principal n puede alojar hasta 2n² electrones en el esquema de Bohr."
+      },
+      {
+        title: "Radio orbital de Bohr (tendencia)",
+        formula: "r_n ∝ n²",
+        text: "Los radios de órbita aumentan con n²; aquí se escalan en unidades visuales para separar capas con claridad."
+      },
+      {
+        title: "Selección de orbital",
+        formula: "P(i) = w_i / Σw",
+        text: "Cada punto de la nube elige un sub-orbital i según su peso electrónico relativo w_i."
+      },
+      {
+        title: "Muestreo radial gaussiano",
+        formula: "r ~ |N(0,1)|·σ + b",
+        text: "La distancia radial se obtiene con una gaussiana para concentrar mayor densidad cerca de regiones de alta probabilidad."
+      },
+      {
+        title: "Densidad visual cuántica",
+        formula: "ρ(r) ∝ exp(-(r/σ)^2)",
+        text: "La intensidad de color se ajusta con un decaimiento exponencial radial para hacer más visibles zonas probables."
+      },
+      {
+        title: "Carga nuclear efectiva",
+        formula: "Z_eff ≈ Z − S",
+        text: "Describe el efecto de apantallamiento: electrones internos (S) reducen la atracción efectiva sobre electrones externos."
+      }
+    ],
+    legendNucleus: "Núcleo (conjunto nuclear)",
+    legendProtons: "Protones (+)",
+    legendNeutrons: "Neutrones (0)",
     legendElectrons: "Electrones (Partículas discretas)",
     legendOrbits: "Niveles de Energía (Órbitas)",
-    legendClouds: "Nube de Probabilidad (Orbital)",
+    legendCloudPoints: "Puntos de muestreo electrónico",
+    legendClouds: "Nube de probabilidad (densidad orbital)",
     zoomTip: "Arrastra para rotar • Scroll para zoom",
     backToTable: "Volver a la Tabla",
     categories: {
@@ -238,8 +285,8 @@ const DICT = {
     year: "Discovery Year",
     developedBy: "Developed by JuanTomoo",
     license: "MIT License",
-    bohrDesc: "The Bohr model depicts electrons orbiting the nucleus in fixed, circular energy levels.",
-    quantumDesc: "The quantum model represents electrons as probability densities, with s, p, d and f geometries derived from the element's electronic configuration.",
+    bohrDesc: "The Bohr model places electrons in quantized circular orbits, with shell capacity 2n² and increasing orbital radii.",
+    quantumDesc: "The quantum model renders electronic probability distribution (density samples) using s, p, d, and f shapes from each element's electronic configuration.",
     eduTitle: "Fundamentals of Quantum Chemistry",
     keyConceptsTitle: "Core concepts to learn",
     eduZ: "Atomic Number (Z): Represents the number of protons in an atom's nucleus. It defines the element's identity.",
@@ -288,10 +335,57 @@ const DICT = {
       }
     ],
     noData: "No data",
-    legendNucleus: "Nucleus (Protons/Neutrons)",
+    formulasTitle: "Simulator formulas (math and physics)",
+    formulasIntro: "These expressions explain how the nucleus, Bohr model, and quantum cloud are generated.",
+    formulas: [
+      {
+        title: "Neutron count",
+        formula: "N ≈ A − Z",
+        text: "Neutrons are approximated by subtracting atomic number Z from rounded atomic mass A."
+      },
+      {
+        title: "Nuclear scale",
+        formula: "R_nucleus ∝ A^(1/3)",
+        text: "Nuclear radius grows with the cube root of mass number A; the simulator normalizes it for stable rendering."
+      },
+      {
+        title: "Bohr shell capacity",
+        formula: "C_n = 2n²",
+        text: "Each principal shell n can hold up to 2n² electrons in the Bohr approximation."
+      },
+      {
+        title: "Bohr orbital radius (trend)",
+        formula: "r_n ∝ n²",
+        text: "Orbital radii increase with n²; here they are scaled to separate shells clearly in view space."
+      },
+      {
+        title: "Orbital selection",
+        formula: "P(i) = w_i / Σw",
+        text: "Each cloud point picks a sub-orbital i according to its relative electron weight w_i."
+      },
+      {
+        title: "Gaussian radial sampling",
+        formula: "r ~ |N(0,1)|·σ + b",
+        text: "Radial distance uses a Gaussian term to concentrate samples in higher-probability regions."
+      },
+      {
+        title: "Quantum visual density",
+        formula: "ρ(r) ∝ exp(-(r/σ)^2)",
+        text: "Color intensity is adjusted with an exponential radial decay so probable zones stand out more clearly."
+      },
+      {
+        title: "Effective nuclear charge",
+        formula: "Z_eff ≈ Z − S",
+        text: "Captures shielding: inner electrons (S) reduce effective attraction on outer electrons."
+      }
+    ],
+    legendNucleus: "Nucleus (nuclear cluster)",
+    legendProtons: "Protons (+)",
+    legendNeutrons: "Neutrons (0)",
     legendElectrons: "Electrons (Discrete particles)",
     legendOrbits: "Energy Levels (Orbits)",
-    legendClouds: "Probability Cloud (Orbital)",
+    legendCloudPoints: "Electron sampling points",
+    legendClouds: "Probability cloud (orbital density)",
     zoomTip: "Drag to rotate • Scroll to zoom",
     backToTable: "Back to Table",
     categories: {
@@ -704,13 +798,14 @@ const Simulation3D = ({ element, modelType, langStr }) => {
       } else {
         // Quantum Model
         const pGeo = new THREE.BufferGeometry();
-        const pCount = Math.min(Math.max(2000, element.z * 120 + element.period * 180), 12000);
+        const pCount = Math.min(Math.max(2600, element.z * 140 + element.period * 220), 14000);
         const pArr = new Float32Array(pCount * 3);
         const pColors = new Float32Array(pCount * 3);
         const baseColor = new THREE.Color(color);
 
         const profile = buildQuantumProfile(element);
         const totalWeight = profile.reduce((acc, o) => acc + o.weight, 0);
+        const maxWeight = Math.max(1, ...profile.map((o) => o.weight));
 
         for (let i = 0; i < pCount * 3; i += 3) {
           let pick = Math.random() * totalWeight;
@@ -733,8 +828,12 @@ const Simulation3D = ({ element, modelType, langStr }) => {
           pArr[i + 2] = z;
 
           const dist = Math.sqrt(x * x + y * y + z * z);
-          const shellNorm = Math.min(1, dist / (selected.scale * 4.5));
-          const lightness = Math.max(0.4, 1.1 - shellNorm * 0.6) * (0.75 + Math.random() * 0.35);
+          const sigma = selected.scale * (1.15 + selected.l * 0.25);
+          const probDensity = Math.exp(-Math.pow(dist / Math.max(0.001, sigma), 2));
+          const occupancyFactor = 0.55 + 0.45 * (selected.weight / maxWeight);
+          const localDensity = Math.max(0, Math.min(1, probDensity * occupancyFactor));
+          const contrast = Math.pow(localDensity, 0.58);
+          const lightness = 0.18 + contrast * 1.55;
 
           pColors[i] = Math.min(1, baseColor.r * lightness);
           pColors[i + 1] = Math.min(1, baseColor.g * lightness);
@@ -744,7 +843,13 @@ const Simulation3D = ({ element, modelType, langStr }) => {
         pGeo.setAttribute('position', new THREE.BufferAttribute(pArr, 3));
         pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
         const pMat = new THREE.PointsMaterial({
-          size: 0.085, vertexColors: true, transparent: true, opacity: 0.52
+          size: 0.11,
+          sizeAttenuation: true,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.68,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
         });
         const cloud = new THREE.Points(pGeo, pMat);
         particles.push(cloud);
@@ -843,14 +948,18 @@ const Simulation3D = ({ element, modelType, langStr }) => {
       <div className="absolute bottom-4 left-4 bg-gray-900/80 p-3 rounded-lg backdrop-blur-md border border-gray-700 pointer-events-none text-xs">
         <h4 className="font-bold text-gray-300 mb-2 border-b border-gray-700 pb-1 uppercase tracking-wider">{t.legend}</h4>
         <div className="flex flex-col gap-1.5 text-gray-400">
-           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={{backgroundColor: CAT_COLORS[element.category]}}></div> {t.legendNucleus}</div>
+           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#ff3355]"></div> {t.legendProtons}</div>
+           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-[#4488cc]"></div> {t.legendNeutrons}</div>
            {modelType === 'bohr' ? (
              <>
                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-white"></div> {t.legendElectrons}</div>
                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full border border-gray-500"></div> {t.legendOrbits}</div>
              </>
            ) : (
-             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full opacity-50" style={{backgroundColor: CAT_COLORS[element.category]}}></div> {t.legendClouds}</div>
+             <>
+               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-white"></div> {t.legendCloudPoints}</div>
+               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full opacity-60" style={{backgroundColor: CAT_COLORS[element.category]}}></div> {t.legendClouds}</div>
+             </>
            )}
         </div>
       </div>
@@ -1033,6 +1142,23 @@ function App() {
                     <article key={concept.title} className="bg-[#0f1522] border border-gray-800 rounded-lg p-4 hover:border-cyan-500/40 transition-colors">
                       <h4 className="text-sm md:text-base font-bold text-cyan-300 mb-2">{concept.title}</h4>
                       <p className="text-xs md:text-sm text-gray-300 leading-relaxed">{concept.text}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-[#1a1f2e] p-6 rounded-xl border border-gray-800 hover:border-emerald-500/40 transition-colors md:col-span-2">
+                <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                  <Sigma className="text-emerald-400" />
+                  {t.formulasTitle}
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">{t.formulasIntro}</p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {t.formulas.map((item) => (
+                    <article key={item.title} className="bg-[#0f1522] border border-gray-800 rounded-lg p-4 hover:border-emerald-500/40 transition-colors">
+                      <h4 className="text-sm md:text-base font-bold text-emerald-300 mb-2">{item.title}</h4>
+                      <p className="text-xs md:text-sm text-cyan-300 font-mono mb-2">{item.formula}</p>
+                      <p className="text-xs md:text-sm text-gray-300 leading-relaxed">{item.text}</p>
                     </article>
                   ))}
                 </div>
